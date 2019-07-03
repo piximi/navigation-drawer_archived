@@ -5,11 +5,12 @@ import { DialogTransition } from '../DialogTransition';
 import { Form } from '../Form/Form';
 import { History } from '../History';
 import classNames from 'classnames';
-import { createStyles, makeStyles } from '@material-ui/styles';
+import { makeStyles } from '@material-ui/styles';
 import { Category, Image } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
+import { createModel, createTrainAndTestSet } from '@piximi/models';
 
 const useStyles = makeStyles(styles);
 
@@ -111,83 +112,83 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const fit = async () => {
-    // const numberOfClasses: number = categories.length - 1;
-    // if (numberOfClasses === 1) {
-    //   alert('The classifier must have at least two classes!');
-    //   return;
-    // }
-    //
-    // console.log(stopTraining);
-    // await resetStopTraining();
-    // console.log(stopTraining);
-    // console.log('create model...');
-    // const model = await createModel(
-    //   numberOfClasses,
-    //   100,
-    //   lossFunction,
-    //   ['accuracy'],
-    //   tensorflow.train.adam(learningRate)
-    // );
-    // console.log('... created model');
-    //
-    // console.log(tensorflow.memory());
-    //
-    // console.log('create dataset...');
-    // const { trainData, testData } = await createTrainAndTestSet(
-    //   categories,
-    //   images
-    // );
-    // const x = trainData.data;
-    // const y = trainData.lables;
-    // console.log('...created dataset');
-    //
-    // const args = {
-    //   batchSize: batchSize,
-    //   callbacks: {
-    //     onTrainBegin: async (logs?: tensorflow.Logs | undefined) => {
-    //       console.log(`onTrainBegin`);
-    //     },
-    //     onTrainEnd: async (logs?: tensorflow.Logs | undefined) => {},
-    //     onEpochBegin: async (
-    //       epoch: number,
-    //       logs?: tensorflow.Logs | undefined
-    //     ) => {
-    //       console.log(`onEpochBegin ${epoch}`);
-    //     },
-    //     onEpochEnd: async (
-    //       epoch: number,
-    //       logs?: tensorflow.Logs | undefined
-    //     ) => {
-    //       if (logs) {
-    //         console.log(`onEpochEnd ${epoch}, loss: ${logs.loss}`);
-    //       }
-    //       if (stopTraining) {
-    //         console.log('test train stop');
-    //         model.stopTraining = true;
-    //       }
-    //     },
-    //     onBatchBegin: async (
-    //       batch: number,
-    //       logs?: tensorflow.Logs | undefined
-    //     ) => {
-    //       console.log(`onBatchBegin ${batch}`);
-    //     },
-    //     onBatchEnd: async (
-    //       batch: number,
-    //       logs?: tensorflow.Logs | undefined
-    //     ) => {
-    //       console.log(`onBatchEnd ${batch}`);
-    //     }
-    //   },
-    //   epochs: epochs
-    // };
-    //
-    // console.log('fit the model...');
-    // const history = await model.fit(x, y, args);
-    //
-    // console.log('done with training!');
-    // await model.save('indexeddb://mobileNet');
-    // console.log('saved the model!');
+    const numberOfClasses: number = categories.length - 1;
+    if (numberOfClasses === 1) {
+      alert('The classifier must have at least two classes!');
+      return;
+    }
+
+    console.log(stopTraining);
+    await resetStopTraining();
+    console.log(stopTraining);
+    console.log('create model...');
+    const model = await createModel(
+      numberOfClasses,
+      100,
+      lossFunction,
+      ['accuracy'],
+      tensorflow.train.adam(learningRate)
+    );
+    console.log('... created model');
+
+    console.log(tensorflow.memory());
+
+    console.log('create dataset...');
+    const { trainData, testData } = await createTrainAndTestSet(
+      categories,
+      images
+    );
+    const x = trainData.data;
+    const y = trainData.lables;
+    console.log('...created dataset');
+
+    const args = {
+      batchSize: batchSize,
+      callbacks: {
+        onTrainBegin: async (logs?: tensorflow.Logs | undefined) => {
+          console.log(`onTrainBegin`);
+        },
+        onTrainEnd: async (logs?: tensorflow.Logs | undefined) => {},
+        onEpochBegin: async (
+          epoch: number,
+          logs?: tensorflow.Logs | undefined
+        ) => {
+          console.log(`onEpochBegin ${epoch}`);
+        },
+        onEpochEnd: async (
+          epoch: number,
+          logs?: tensorflow.Logs | undefined
+        ) => {
+          if (logs) {
+            console.log(`onEpochEnd ${epoch}, loss: ${logs.loss}`);
+          }
+          if (stopTraining) {
+            console.log('test train stop');
+            model.stopTraining = true;
+          }
+        },
+        onBatchBegin: async (
+          batch: number,
+          logs?: tensorflow.Logs | undefined
+        ) => {
+          console.log(`onBatchBegin ${batch}`);
+        },
+        onBatchEnd: async (
+          batch: number,
+          logs?: tensorflow.Logs | undefined
+        ) => {
+          console.log(`onBatchEnd ${batch}`);
+        }
+      },
+      epochs: epochs
+    };
+
+    console.log('fit the model...');
+    const history = await model.fit(x, y, args);
+
+    console.log('done with training!');
+    await model.save('indexeddb://mobileNet');
+    console.log('saved the model!');
   };
 
   const onFit = async () => {
