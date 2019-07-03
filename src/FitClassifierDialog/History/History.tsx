@@ -1,28 +1,14 @@
 import * as React from 'react';
-import { createStyles, makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 import { VictoryAxis, VictoryChart, VictoryLine, VictoryTheme } from 'victory';
 import { Grid, Typography } from '@material-ui/core';
+import { styles } from './History.css';
 
 type Data = { x: Number; y: Number }[];
 
 type HistoryProps = { data: Data };
 
-const useStyles = makeStyles(() =>
-  createStyles({
-    typography: {
-      color: 'rgba(0, 0, 0, 0.54)',
-      padding: 0,
-      fontSize: '1rem',
-      fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-      fontWeight: 400,
-      lineHeight: 1,
-      letterSpacing: '0.00938em',
-      margin: '16px 0',
-      transform: 'translate(0, 1.5px) scale(0.75)',
-      transformOrigin: 'top left'
-    }
-  })
-);
+const useStyles = makeStyles(styles);
 
 export const History = (props: HistoryProps) => {
   const { data } = props;
@@ -53,7 +39,7 @@ export const History = (props: HistoryProps) => {
             theme={VictoryTheme.material}
           />
 
-          <VictoryLine data={[]} />
+          <VictoryLine data={data} />
         </VictoryChart>
       </Grid>
 
@@ -79,7 +65,7 @@ export const History = (props: HistoryProps) => {
             theme={VictoryTheme.material}
           />
 
-          <VictoryLine data={[]} />
+          <VictoryLine data={data} />
         </VictoryChart>
       </Grid>
     </Grid>

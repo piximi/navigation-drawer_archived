@@ -129,17 +129,21 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       ['accuracy'],
       tensorflow.train.adam(learningRate)
     );
+
     console.log('... created model');
 
     console.log(tensorflow.memory());
 
     console.log('create dataset...');
+
     const { trainData, testData } = await createTrainAndTestSet(
       categories,
       images
     );
+
     const x = trainData.data;
     const y = trainData.lables;
+
     console.log('...created dataset');
 
     const args = {
