@@ -1,10 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  Grid,
-  LinearProgress,
-  Theme
-} from '@material-ui/core';
+import { Dialog, DialogContent } from '@material-ui/core';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
@@ -15,34 +9,7 @@ import { createStyles, makeStyles } from '@material-ui/styles';
 import { Category, Image } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
-
-const drawerWidth = 280;
-
-const styles = (theme: Theme) =>
-  createStyles({
-    content: {
-      flexGrow: 1,
-      transition: theme.transitions.create('margin', {
-        easing: theme.transitions.easing.sharp,
-        duration: theme.transitions.duration.leavingScreen
-      })
-    },
-    contentLeft: {
-      marginLeft: 0
-    },
-    contentShift: {
-      transition: theme.transitions.create('margin', {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen
-      })
-    },
-    contentShiftLeft: {
-      marginLeft: drawerWidth
-    },
-    paper: {
-      zIndex: 1100
-    }
-  });
+import { styles } from './FitClassifierDialog.css';
 
 const useStyles = makeStyles(styles);
 
