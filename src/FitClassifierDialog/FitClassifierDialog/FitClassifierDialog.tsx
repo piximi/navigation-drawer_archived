@@ -14,6 +14,8 @@ import { createModel, createTrainAndTestSet } from '@piximi/models';
 
 const useStyles = makeStyles(styles);
 
+type LossHistory = { x: number; y: number }[];
+
 type FitClassifierDialogProps = {
   categories: Category[];
   closeDialog: () => void;
@@ -28,7 +30,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   const styles = useStyles({});
 
   const [stopTraining, setStopTraining] = useState<boolean>(false);
-
   const [batchSize, setBatchSize] = useState<number>(32);
   const [epochs, setEpochs] = useState<number>(10);
   const [optimizationAlgorithm, setOptimizationAlgorithm] = useState<
@@ -39,14 +40,11 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     'categoricalCrossentropy'
   );
   const [inputShape, setInputShape] = useState<string>('224, 224, 3');
-  const [trainingLossHistory, setTrainingLossHistory] = useState<number[]>([]);
+  const [trainingLossHistory, setTrainingLossHistory] = useState<LossHistory>([
+    { x: 0, y: 0 }
+  ]);
+
   const [trainingAccuracyHistory, setTrainingAccuracyHistory] = useState<
-    number[]
-  >([]);
-  const [validationLossHistory, setValidationLossHistory] = useState<number[]>(
-    []
-  );
-  const [validationAccuracyHistory, setValidationAccuracyHistory] = useState<
     number[]
   >([]);
 
@@ -118,10 +116,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       return;
     }
 
-    console.log(stopTraining);
     await resetStopTraining();
-    console.log(stopTraining);
-    console.log('create model...');
+
     const model = await createModel(
       numberOfClasses,
       100,
@@ -129,12 +125,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       ['accuracy'],
       tensorflow.train.adam(learningRate)
     );
-
-    console.log('... created model');
-
-    console.log(tensorflow.memory());
-
-    console.log('create dataset...');
 
     const { trainData, testData } = await createTrainAndTestSet(
       categories,
@@ -144,21 +134,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     const x = trainData.data;
     const y = trainData.lables;
 
-    console.log('...created dataset');
-
     const args = {
       batchSize: batchSize,
       callbacks: {
-        onTrainBegin: async (logs?: tensorflow.Logs | undefined) => {
-          console.log(`onTrainBegin`);
-        },
-        onTrainEnd: async (logs?: tensorflow.Logs | undefined) => {},
-        onEpochBegin: async (
-          epoch: number,
-          logs?: tensorflow.Logs | undefined
-        ) => {
-          console.log(`onEpochBegin ${epoch}`);
-        },
         onEpochEnd: async (
           epoch: number,
           logs?: tensorflow.Logs | undefined
@@ -171,28 +149,22 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             model.stopTraining = true;
           }
         },
-        onBatchBegin: async (
-          batch: number,
-          logs?: tensorflow.Logs | undefined
-        ) => {
-          console.log(`onBatchBegin ${batch}`);
-        },
         onBatchEnd: async (
           batch: number,
           logs?: tensorflow.Logs | undefined
         ) => {
-          console.log(`onBatchEnd ${batch}`);
+          setTrainingLossHistory([
+            ...trainingLossHistory,
+            { x: batch, y: logs!.loss }
+          ]);
         }
       },
       epochs: epochs
     };
 
-    console.log('fit the model...');
     const history = await model.fit(x, y, args);
 
-    console.log('done with training!');
-    await model.save('indexeddb://mobileNet');
-    console.log('saved the model!');
+    await model.save('indexeddb://mobilenet');
   };
 
   const onFit = async () => {
@@ -225,7 +197,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       />
 
       <DialogContent>
-        <History data={[]} />
+        <History data={trainingLossHistory} />
 
         <Form
           batchSize={batchSize}
