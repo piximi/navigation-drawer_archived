@@ -46,7 +46,7 @@ export const CategoryListItem = (props: any) => {
 
   const { anchorEl, openedMenu, openMenu, closeMenu } = useMenu();
 
-  const [animateOnDrop, setAnimateOnDrop] = React.useState(false);
+  const [animateOnDrop, setAnimateOnDrop] = React.useState<Partial<boolean>>();
 
   const classes = useStyles({});
 
