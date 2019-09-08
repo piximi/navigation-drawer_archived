@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '@material-ui/core';
+import { Dialog, DialogContent, Popover } from '@material-ui/core';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
@@ -187,7 +187,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       onClose={closeDialog}
       open={openedDialog}
       TransitionComponent={DialogTransition}
-      style={{ zIndex: 1100 }}
+      style={{ zIndex: 1203 }}
     >
       <DialogAppBar
         onStopTrainingChange={onStopTrainingChange}
