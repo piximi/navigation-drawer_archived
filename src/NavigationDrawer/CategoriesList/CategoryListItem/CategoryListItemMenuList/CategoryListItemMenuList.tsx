@@ -80,10 +80,10 @@ export const CategoryListItemMenuList = (
               closeMenu={closeMenu}
             />
 
-            <Divider />
-
             {known && (
               <div>
+                <Divider />
+
                 <MenuItem onClick={onEditCategoryClick}>
                   <ListItemText primary="Edit category" />
                 </MenuItem>
