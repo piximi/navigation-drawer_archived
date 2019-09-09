@@ -11,6 +11,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { useCollapseList } from '@piximi/hooks';
 import { ConnectedFitListItem } from '../FitListItem/ConnectedFitListItem';
 import { ConnectedEvaluateListItem } from '../EvaluateListItem/ConnectedEvaluateListItem';
+import { ConnectedPredictListItem } from '../PredictListItem/ConnectedPredictListItem';
 
 export const ClassifierList = () => {
   const { collapsedList, collapseList } = useCollapseList();
@@ -29,6 +30,8 @@ export const ClassifierList = () => {
         <ConnectedFitListItem />
 
         <ConnectedEvaluateListItem />
+
+        <ConnectedPredictListItem />
       </Collapse>
     </List>
   );

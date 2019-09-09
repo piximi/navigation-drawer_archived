@@ -2,16 +2,24 @@ import { ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
 import * as React from 'react';
 import BarChartIcon from '@material-ui/icons/BarChart';
 import { useTranslation } from 'react-i18next';
-import { AlertSnackbar } from '@piximi/components';
-import { useSnackbar } from '@piximi/hooks';
+import { useDialog } from '@piximi/hooks';
+import { Category, Image } from '@piximi/types';
+import { EvaluateClassifierDialog } from '../../../EvaluateClassifierDialog/EvaluateClassifierDialog';
 
-export const EvaluateListItem = () => {
-  const { openedSnackbar, openSnackbar, closeSnackbar } = useSnackbar();
+type EvaluateListItemProbs = {
+  categories: Category[];
+  images: Image[];
+};
+
+export const EvaluateListItem = (probs: EvaluateListItemProbs) => {
+  const { categories, images } = probs;
+
+  const { openedDialog, openDialog, closeDialog } = useDialog();
 
   const { t: translation } = useTranslation();
 
   const evaluate = async () => {
-    openSnackbar();
+    openDialog();
   };
 
   return (
@@ -24,10 +32,12 @@ export const EvaluateListItem = () => {
         <ListItemText primary={translation('Evaluate')} />
       </ListItem>
 
-      <AlertSnackbar
-        closeSnackbar={closeSnackbar}
-        message={`Loss: ${0}, Accuracy: ${0}`}
-        openedSnackbar={openedSnackbar}
+      <EvaluateClassifierDialog
+        categories={categories}
+        closeDialog={closeDialog}
+        images={images}
+        openedDialog={openedDialog}
+        openedDrawer={true}
       />
     </React.Fragment>
   );

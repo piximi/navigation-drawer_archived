@@ -1,15 +1,8 @@
 import * as React from 'react';
-import {
-  ArrowBack,
-  Stop,
-  PlayCircleOutline,
-  ReplayRounded
-} from '@material-ui/icons';
+import { ArrowBack, PlayCircleOutline } from '@material-ui/icons';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import classNames from 'classnames';
 import { AppBar, IconButton, Toolbar, Tooltip } from '@material-ui/core';
-
-const drawerWidth = 280;
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -32,7 +25,7 @@ const useStyles = makeStyles((theme: Theme) =>
 );
 
 export const DialogAppBar = (props: any) => {
-  const { onStopTrainingChange, closeDialog, fit, openedDrawer } = props;
+  const { closeDialog, evaluate, openedDrawer } = props;
 
   const classes = useStyles();
 
@@ -58,36 +51,16 @@ export const DialogAppBar = (props: any) => {
 
         <div className={classes.grow} />
 
-        <Tooltip title="Fit the model" placement="bottom">
+        <Tooltip title="Evaluate the model" placement="bottom">
           <IconButton
-            color="secondary"
             className={classes.button}
-            onClick={fit}
+            onClick={evaluate}
             href={''}
+            size={'medium'}
           >
             <PlayCircleOutline />
           </IconButton>
         </Tooltip>
-
-        <Tooltip title="Stop fitting the model" placement="bottom">
-          <IconButton
-            color="secondary"
-            className={classes.button}
-            onClick={onStopTrainingChange}
-            href={''}
-          >
-            <Stop />
-          </IconButton>
-        </Tooltip>
-
-        <IconButton
-          disabled
-          className={classes.button}
-          onClick={closeDialog}
-          href={''}
-        >
-          <ReplayRounded />
-        </IconButton>
       </Toolbar>
     </AppBar>
   );

@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, Popover } from '@material-ui/core';
+import { Dialog, DialogContent, DialogContentText } from '@material-ui/core';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
@@ -10,7 +10,29 @@ import { Category, Image } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
-import { createModel, createTrainAndTestSet } from '@piximi/models';
+import { createMobilenet } from '@piximi/models';
+import { createTrainingSet } from './dataset';
+import { updateImagesPartitionAction } from '@piximi/store';
+
+const lossFunctions = {
+  absoluteDifference: 'Absolute difference',
+  cosineDistance: 'Cosine distance',
+  hingeLoss: 'Hinge',
+  huberLoss: 'Huber',
+  logLoss: 'Log',
+  meanSquaredError: 'Mean squared error (MSE)',
+  sigmoidCrossEntropy: 'Sigmoid cross entropy',
+  softmaxCrossEntropy: 'Softmax cross entropy',
+  categoricalCrossentropy: 'Categorical cross entropy'
+};
+
+const optimizationAlgorithms: { [identifier: string]: any } = {
+  adadelta: tensorflow.train.adadelta,
+  adam: tensorflow.train.adam,
+  adamax: tensorflow.train.adamax,
+  rmsprop: tensorflow.train.rmsprop,
+  sgd: tensorflow.train.sgd
+};
 
 const useStyles = makeStyles(styles);
 
@@ -24,17 +46,40 @@ type FitClassifierDialogProps = {
   openedDrawer: boolean;
 };
 
+const TESTSET_RATIO = 0.2;
+
+const assignToSet = (): number => {
+  const rdn = Math.random();
+  if (rdn < TESTSET_RATIO) {
+    return 2;
+  } else {
+    return 0;
+  }
+};
+
+// assign each image to train- test- or validation- set
+export const initializeDatasets = (images: Image[]) => {
+  console.log('initialize dataset');
+  var partitions: number[] = [];
+  images.forEach((image: Image) => {
+    const setItentifier = assignToSet();
+    partitions.push(setItentifier);
+  });
+  updateImagesPartitionAction(partitions);
+};
+
 export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   const { categories, closeDialog, images, openedDialog, openedDrawer } = props;
 
   const styles = useStyles({});
 
   const [stopTraining, setStopTraining] = useState<boolean>(false);
+  const [datasetInitialized, setDatasetInitialized] = useState<boolean>(false);
   const [batchSize, setBatchSize] = useState<number>(32);
   const [epochs, setEpochs] = useState<number>(10);
-  const [optimizationAlgorithm, setOptimizationAlgorithm] = useState<
-    tensorflow.Optimizer
-  >(tensorflow.train.adam);
+  const [optimizationAlgorithm, setOptimizationAlgorithm] = useState<string>(
+    'adam'
+  );
   const [learningRate, setLearningRate] = useState<number>(0.01);
   const [lossFunction, setLossFunction] = useState<string>(
     'categoricalCrossentropy'
@@ -67,8 +112,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const resetStopTraining = async () => {
-    console.log('reset stop');
-    await setStopTraining(false);
+    setStopTraining(false);
   };
 
   const onInputShapeChange = (event: React.FormEvent<EventTarget>) => {
@@ -94,10 +138,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     event: React.FormEvent<EventTarget>
   ) => {
     const target = event.target as HTMLInputElement;
-    //const value = target.value as tensorflow.Optimizer;
-    const value = tensorflow.train.adam;
 
-    setOptimizationAlgorithm(value(0.1));
+    setOptimizationAlgorithm(target.value);
   };
 
   const className = classNames(styles.content, styles.contentLeft, {
@@ -116,9 +158,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       return;
     }
 
-    await resetStopTraining();
-
-    const model = await createModel(
+    const model = await createMobilenet(
       numberOfClasses,
       100,
       lossFunction,
@@ -126,40 +166,31 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       tensorflow.train.adam(learningRate)
     );
 
-    const { trainData, testData } = await createTrainAndTestSet(
-      categories,
-      images
-    );
+    const trainingSet = await createTrainingSet(categories, images);
 
-    const x = trainData.data;
-    const y = trainData.lables;
+    const x = trainingSet.data;
+    const y = trainingSet.lables;
 
     const args = {
       batchSize: batchSize,
+      epochs: epochs,
+      validationSplit: 0.2,
       callbacks: {
         onEpochEnd: async (
           epoch: number,
           logs?: tensorflow.Logs | undefined
         ) => {
           if (logs) {
-            console.log(`onEpochEnd ${epoch}, loss: ${logs.loss}`);
+            console.log(
+              `onEpochEnd ${epoch}, loss: ${logs.loss}, accuracy: ${logs.accuracy}`
+            );
           }
           if (stopTraining) {
             console.log('test train stop');
             model.stopTraining = true;
           }
-        },
-        onBatchEnd: async (
-          batch: number,
-          logs?: tensorflow.Logs | undefined
-        ) => {
-          setTrainingLossHistory([
-            ...trainingLossHistory,
-            { x: batch, y: logs!.loss }
-          ]);
         }
-      },
-      epochs: epochs
+      }
     };
 
     const history = await model.fit(x, y, args);
@@ -168,13 +199,12 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const onFit = async () => {
-    const startTime = new Date().getTime();
-
+    if (!datasetInitialized) {
+      initializeDatasets(images);
+      setDatasetInitialized(true);
+    }
+    await resetStopTraining();
     await fit().then(() => {});
-
-    const endTime = new Date().getTime();
-    const seconds = Math.round((endTime - startTime) / 1000); //in seconds
-    console.log(seconds + ' seconds');
   };
 
   return (
@@ -197,7 +227,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       />
 
       <DialogContent>
-        <History data={trainingLossHistory} />
+        <DialogContentText>Classifier Settings:</DialogContentText>
 
         <Form
           batchSize={batchSize}
@@ -215,6 +245,10 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
           openedDialog={openedDialog}
           optimizationAlgorithm={optimizationAlgorithm}
         />
+
+        <DialogContentText>Training history:</DialogContentText>
+
+        <History data={trainingLossHistory} />
       </DialogContent>
     </Dialog>
   );

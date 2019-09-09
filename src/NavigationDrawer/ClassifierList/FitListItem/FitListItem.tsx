@@ -3,9 +3,17 @@ import * as React from 'react';
 import ScatterPlotIcon from '@material-ui/icons/ScatterPlot';
 import { useTranslation } from 'react-i18next';
 import { useDialog } from '@piximi/hooks';
+import { Category, Image } from '@piximi/types';
 import { FitClassifierDialog } from '../../../FitClassifierDialog/FitClassifierDialog';
 
-export const FitListItem = () => {
+type FitListItemProps = {
+  categories: Category[];
+  images: Image[];
+};
+
+export const FitListItem = (props: FitListItemProps) => {
+  const { categories, images } = props;
+
   const { openedDialog, openDialog, closeDialog } = useDialog();
 
   const { t: translation } = useTranslation();
@@ -25,9 +33,9 @@ export const FitListItem = () => {
       </ListItem>
 
       <FitClassifierDialog
-        categories={[]}
+        categories={categories}
         closeDialog={closeDialog}
-        images={[]}
+        images={images}
         openedDialog={openedDialog}
         openedDrawer={true}
       />
