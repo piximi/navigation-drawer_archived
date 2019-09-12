@@ -4,7 +4,7 @@ import ScatterPlotIcon from '@material-ui/icons/ScatterPlot';
 import { useTranslation } from 'react-i18next';
 import { useDialog } from '@piximi/hooks';
 import { Category, Image } from '@piximi/types';
-import { FitClassifierDialog } from '../../../FitClassifierDialog/FitClassifierDialog';
+import { ConnectedFitClassifierDialog } from '../../../FitClassifierDialog/FitClassifierDialog/ConnectedFitClassifierDialog';
 
 type FitListItemProps = {
   categories: Category[];
@@ -32,10 +32,8 @@ export const FitListItem = (props: FitListItemProps) => {
         <ListItemText primary={translation('Fit')} />
       </ListItem>
 
-      <FitClassifierDialog
-        categories={categories}
+      <ConnectedFitClassifierDialog
         closeDialog={closeDialog}
-        images={images}
         openedDialog={openedDialog}
         openedDrawer={true}
       />

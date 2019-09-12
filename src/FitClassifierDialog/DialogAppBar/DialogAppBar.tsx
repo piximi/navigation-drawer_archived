@@ -59,19 +59,13 @@ export const DialogAppBar = (props: any) => {
         <div className={classes.grow} />
 
         <Tooltip title="Fit the model" placement="bottom">
-          <IconButton
-            color="secondary"
-            className={classes.button}
-            onClick={fit}
-            href={''}
-          >
+          <IconButton className={classes.button} onClick={fit} href={''}>
             <PlayCircleOutline />
           </IconButton>
         </Tooltip>
 
         <Tooltip title="Stop fitting the model" placement="bottom">
           <IconButton
-            color="secondary"
             className={classes.button}
             onClick={onStopTrainingChange}
             href={''}

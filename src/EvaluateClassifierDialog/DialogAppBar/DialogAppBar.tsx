@@ -2,7 +2,14 @@ import * as React from 'react';
 import { ArrowBack, PlayCircleOutline } from '@material-ui/icons';
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
 import classNames from 'classnames';
-import { AppBar, IconButton, Toolbar, Tooltip } from '@material-ui/core';
+import {
+  AppBar,
+  IconButton,
+  Toolbar,
+  Tooltip,
+  Switch,
+  FormControlLabel
+} from '@material-ui/core';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -24,8 +31,22 @@ const useStyles = makeStyles((theme: Theme) =>
   })
 );
 
-export const DialogAppBar = (props: any) => {
-  const { closeDialog, evaluate, openedDrawer } = props;
+type DialogAppBarProps = {
+  useCrossValidation: boolean;
+  onUseCrossValidationChange: (event: React.FormEvent<EventTarget>) => void;
+  closeDialog: () => void;
+  evaluate: () => void;
+  openedDrawer: boolean;
+};
+
+export const DialogAppBar = (props: DialogAppBarProps) => {
+  const {
+    closeDialog,
+    evaluate,
+    openedDrawer,
+    useCrossValidation,
+    onUseCrossValidationChange
+  } = props;
 
   const classes = useStyles();
 
@@ -49,15 +70,20 @@ export const DialogAppBar = (props: any) => {
           </IconButton>
         </Tooltip>
 
-        <div className={classes.grow} />
+        <Tooltip title="use cross validation" placement="bottom">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={useCrossValidation}
+                onChange={onUseCrossValidationChange}
+              />
+            }
+            label="use cross validation"
+          />
+        </Tooltip>
 
         <Tooltip title="Evaluate the model" placement="bottom">
-          <IconButton
-            className={classes.button}
-            onClick={evaluate}
-            href={''}
-            size={'medium'}
-          >
+          <IconButton className={classes.button} onClick={evaluate} href={''}>
             <PlayCircleOutline />
           </IconButton>
         </Tooltip>

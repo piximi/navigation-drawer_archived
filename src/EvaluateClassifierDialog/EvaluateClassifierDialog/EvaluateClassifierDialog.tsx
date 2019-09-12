@@ -3,34 +3,25 @@ import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
 import classNames from 'classnames';
-import { Form } from '../Form/Form';
+import { MetricsTable } from '../MetricsTable/MetricsTable';
+import Paper from '@material-ui/core/Paper';
+import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/styles';
-import { Category, Image } from '@piximi/types';
+import { withStyles, Theme, createStyles } from '@material-ui/core/styles';
+import { Category, Image, Score } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './EvaluateClassifierDialog.css';
 //import { createTestSet } from '@piximi/models';
-import { createTestSet } from '../../FitClassifierDialog/FitClassifierDialog/dataset';
-
-const lossFunctions = {
-  absoluteDifference: 'Absolute difference',
-  cosineDistance: 'Cosine distance',
-  hingeLoss: 'Hinge',
-  huberLoss: 'Huber',
-  logLoss: 'Log',
-  meanSquaredError: 'Mean squared error (MSE)',
-  sigmoidCrossEntropy: 'Sigmoid cross entropy',
-  softmaxCrossEntropy: 'Softmax cross entropy',
-  categoricalCrossentropy: 'Categorical cross entropy'
-};
-
-const optimizationAlgorithms: { [identifier: string]: any } = {
-  adadelta: tensorflow.train.adadelta,
-  adam: tensorflow.train.adam,
-  adamax: tensorflow.train.adamax,
-  rmsprop: tensorflow.train.rmsprop,
-  sgd: tensorflow.train.sgd
-};
+import {
+  createTestSet,
+  createTestSetCV
+} from '../../FitClassifierDialog/FitClassifierDialog/dataset';
+import * as tfvis from '@tensorflow/tfjs-vis';
+import {
+  evaluateTensorflowModel,
+  evaluateTensorflowModelCV
+} from './modelEvaluater';
 
 const useStyles = makeStyles(styles);
 
@@ -42,6 +33,11 @@ type EvaluateClassifierDialogProps = {
   openedDrawer: boolean;
 };
 
+const getMatrixFromArray = (array: any, size: number): number[][] => {
+  var matrix: number[][] = [];
+  return matrix;
+};
+
 export const EvaluateClassifierDialog = (
   props: EvaluateClassifierDialogProps
 ) => {
@@ -49,6 +45,8 @@ export const EvaluateClassifierDialog = (
 
   const styles = useStyles({});
   const [useCrossValidation, setUseCrossValidation] = useState<boolean>(false);
+  const [accuracy, setAccuracy] = useState<number>(0);
+  const [crossEntropy, setCrossEntropy] = useState<number>(0);
 
   const onUseCrossValidationChange = (event: React.FormEvent<EventTarget>) => {
     setUseCrossValidation(!useCrossValidation);
@@ -65,23 +63,52 @@ export const EvaluateClassifierDialog = (
 
   const evaluate = async () => {
     const numberOfClasses: number = categories.length - 1;
-
-    const testSet = await createTestSet(categories, images);
-
     const model = await tensorflow.loadLayersModel('indexeddb://mobilenet');
 
-    model.compile({
-      loss: 'categoricalCrossentropy',
-      metrics: ['accuracy'],
-      optimizer: tensorflow.train.adam()
+    var modelEvaluationResults;
+    if (useCrossValidation) {
+      var evaluationSet = await createTestSetCV(categories, images);
+      modelEvaluationResults = await evaluateTensorflowModelCV(
+        model,
+        evaluationSet.data,
+        evaluationSet.lables,
+        numberOfClasses
+      );
+    } else {
+      var evaluationSet = await createTestSet(categories, images);
+      modelEvaluationResults = evaluateTensorflowModel(
+        model,
+        evaluationSet.data,
+        evaluationSet.lables,
+        numberOfClasses
+      );
+    }
+
+    var accuracy = modelEvaluationResults.accuracy;
+    setAccuracy(accuracy);
+    var crossEntropy = modelEvaluationResults.crossEntropy;
+    setCrossEntropy(crossEntropy);
+    var confusionMatrixArray = modelEvaluationResults.confusionMatrixArray;
+
+    var values = [];
+    for (let i = 0; i < numberOfClasses; i++) {
+      const row = [];
+      for (let j = 0; j < numberOfClasses; j++) {
+        // @ts-ignore
+        row.push(confusionMatrixArray[i + j]);
+      }
+      values.push(row);
+    }
+    const lableCategories = categories.filter((category: Category) => {
+      return category.identifier !== '00000000-0000-0000-0000-000000000000';
     });
+    const lables = lableCategories.map((category: Category) => {
+      return category.identifier;
+    });
+    const data = { values, lables };
 
-    const x = tensorflow.tidy(() => tensorflow.concat(testSet.data));
-    const y = tensorflow.tidy(() =>
-      tensorflow.oneHot(testSet.lables, numberOfClasses)
-    );
-
-    const evaluation = (await model.evaluate(x, y)) as tensorflow.Scalar[];
+    const surface = tfvis.visor().surface({ name: 'Confusion Matrix' });
+    tfvis.render.confusionMatrix(surface, data);
   };
 
   const onEvaluate = async () => {
@@ -104,13 +131,24 @@ export const EvaluateClassifierDialog = (
         closeDialog={closeDialog}
         evaluate={onEvaluate}
         openedDrawer={openedDrawer}
+        useCrossValidation={useCrossValidation}
+        onUseCrossValidationChange={onUseCrossValidationChange}
       />
 
+      {/* <MetricsTable
+        accuracy={accuracy}
+        crossEntropy={crossEntropy}
+      /> */}
+      <div>
+        <Grid container spacing={3}>
+          <Grid>
+            <Paper>bla={accuracy}</Paper>
+          </Grid>
+        </Grid>
+      </div>
+
       <DialogContent>
-        <Form
-          useCrossValidation={useCrossValidation}
-          onUseCrossValidationChange={onUseCrossValidationChange}
-        />
+        <div id="tfjs-visor-container"></div>
       </DialogContent>
     </Dialog>
   );

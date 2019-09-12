@@ -1,4 +1,12 @@
-import { Dialog, DialogContent, DialogContentText } from '@material-ui/core';
+import {
+  Dialog,
+  DialogContent,
+  DialogContentText,
+  IconButton,
+  Toolbar,
+  Tooltip,
+  Button
+} from '@material-ui/core';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
@@ -12,19 +20,6 @@ import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
 import { createMobilenet } from '@piximi/models';
 import { createTrainingSet } from './dataset';
-import { updateImagesPartitionAction } from '@piximi/store';
-
-const lossFunctions = {
-  absoluteDifference: 'Absolute difference',
-  cosineDistance: 'Cosine distance',
-  hingeLoss: 'Hinge',
-  huberLoss: 'Huber',
-  logLoss: 'Log',
-  meanSquaredError: 'Mean squared error (MSE)',
-  sigmoidCrossEntropy: 'Sigmoid cross entropy',
-  softmaxCrossEntropy: 'Softmax cross entropy',
-  categoricalCrossentropy: 'Categorical cross entropy'
-};
 
 const optimizationAlgorithms: { [identifier: string]: any } = {
   adadelta: tensorflow.train.adadelta,
@@ -34,12 +29,37 @@ const optimizationAlgorithms: { [identifier: string]: any } = {
   sgd: tensorflow.train.sgd
 };
 
+const createModel = async () => {
+  const model = tensorflow.sequential();
+  model.add(
+    tensorflow.layers.conv2d({
+      inputShape: [224, 224, 3],
+      kernelSize: 3,
+      filters: 16,
+      activation: 'relu'
+    })
+  );
+  model.add(tensorflow.layers.maxPooling2d({ poolSize: 2, strides: 2 }));
+  model.add(
+    tensorflow.layers.conv2d({ kernelSize: 3, filters: 32, activation: 'relu' })
+  );
+  model.add(tensorflow.layers.maxPooling2d({ poolSize: 2, strides: 2 }));
+  model.add(
+    tensorflow.layers.conv2d({ kernelSize: 3, filters: 32, activation: 'relu' })
+  );
+  model.add(tensorflow.layers.flatten());
+  model.add(tensorflow.layers.dense({ units: 64, activation: 'relu' }));
+  model.add(tensorflow.layers.dense({ units: 2, activation: 'softmax' }));
+  return model;
+};
+
 const useStyles = makeStyles(styles);
 
 type LossHistory = { x: number; y: number }[];
 
 type FitClassifierDialogProps = {
   categories: Category[];
+  setImagesPartition: (partitions: number[]) => void;
   closeDialog: () => void;
   images: Image[];
   openedDialog: boolean;
@@ -57,21 +77,27 @@ const assignToSet = (): number => {
   }
 };
 
-// assign each image to train- test- or validation- set
-export const initializeDatasets = (images: Image[]) => {
-  console.log('initialize dataset');
-  var partitions: number[] = [];
-  images.forEach((image: Image) => {
-    const setItentifier = assignToSet();
-    partitions.push(setItentifier);
-  });
-  updateImagesPartitionAction(partitions);
-};
-
 export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
-  const { categories, closeDialog, images, openedDialog, openedDrawer } = props;
+  const {
+    categories,
+    closeDialog,
+    images,
+    openedDialog,
+    openedDrawer,
+    setImagesPartition
+  } = props;
 
   const styles = useStyles({});
+
+  // assign each image to train- test- or validation- set
+  const initializeDatasets = (images: Image[]) => {
+    var partitions: number[] = [];
+    images.forEach((image: Image) => {
+      const setItentifier = assignToSet();
+      partitions.push(setItentifier);
+    });
+    setImagesPartition(partitions);
+  };
 
   const [stopTraining, setStopTraining] = useState<boolean>(false);
   const [datasetInitialized, setDatasetInitialized] = useState<boolean>(false);
@@ -158,18 +184,25 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       return;
     }
 
-    const model = await createMobilenet(
-      numberOfClasses,
-      100,
-      lossFunction,
-      ['accuracy'],
-      tensorflow.train.adam(learningRate)
-    );
+    // const model = await createMobilenet(
+    //   numberOfClasses,
+    //   100,
+    //   lossFunction,
+    //   ['accuracy'],
+    //   optimizationAlgorithms[optimizationAlgorithm](learningRate)
+    // );
+    const model = await createModel();
 
-    const trainingSet = await createTrainingSet(categories, images);
+    const trainingSet = await createTrainingSet(categories, images, 2);
 
     const x = trainingSet.data;
     const y = trainingSet.lables;
+
+    model.compile({
+      loss: lossFunction,
+      metrics: ['accuracy'],
+      optimizer: optimizationAlgorithms[optimizationAlgorithm](learningRate)
+    });
 
     const args = {
       batchSize: batchSize,
@@ -245,6 +278,13 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
           openedDialog={openedDialog}
           optimizationAlgorithm={optimizationAlgorithm}
         />
+
+        <DialogContentText>Dataset Settings:</DialogContentText>
+        <Tooltip title="initialize dataset" placement="bottom">
+          <Button variant="contained" className={classes.button}>
+            Default
+          </Button>
+        </Tooltip>
 
         <DialogContentText>Training history:</DialogContentText>
 
