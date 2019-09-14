@@ -88,6 +88,21 @@ export const createPredictionSet = async (images: Image[]) => {
   return { data: predictionTensorSet, identifiers: imageIdentifiers };
 };
 
+var TESTSET_RATIO = 0.2;
+
+export const assignToSet = (): number => {
+  const rdn = Math.random();
+  if (rdn < TESTSET_RATIO) {
+    return 2;
+  } else {
+    return 0;
+  }
+};
+
+export const setTestsetRatio = (testsetRatio: number) => {
+  TESTSET_RATIO = testsetRatio;
+};
+
 const createLabledTensorflowDataSet = async (
   labledData: Image[],
   categories: Category[]

@@ -9,10 +9,17 @@ import { ConnectedFitClassifierDialog } from '../../../FitClassifierDialog/FitCl
 type FitListItemProps = {
   categories: Category[];
   images: Image[];
+  datasetInitialized: boolean;
+  setDatasetInitialized: (datasetInitialized: boolean) => void;
 };
 
 export const FitListItem = (props: FitListItemProps) => {
-  const { categories, images } = props;
+  const {
+    categories,
+    images,
+    datasetInitialized,
+    setDatasetInitialized
+  } = props;
 
   const { openedDialog, openDialog, closeDialog } = useDialog();
 
@@ -36,6 +43,8 @@ export const FitListItem = (props: FitListItemProps) => {
         closeDialog={closeDialog}
         openedDialog={openedDialog}
         openedDrawer={true}
+        datasetInitialized={datasetInitialized}
+        setDatasetInitialized={setDatasetInitialized}
       />
     </React.Fragment>
   );

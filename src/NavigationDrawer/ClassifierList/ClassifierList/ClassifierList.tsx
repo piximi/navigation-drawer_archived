@@ -6,6 +6,7 @@ import {
   ListItemText
 } from '@material-ui/core';
 import * as React from 'react';
+import { useState } from 'react';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { useCollapseList } from '@piximi/hooks';
@@ -15,6 +16,8 @@ import { ConnectedPredictListItem } from '../PredictListItem/ConnectedPredictLis
 
 export const ClassifierList = () => {
   const { collapsedList, collapseList } = useCollapseList();
+
+  const [datasetInitialized, setDatasetInitialized] = useState<boolean>(false);
 
   return (
     <List dense>
@@ -27,9 +30,15 @@ export const ClassifierList = () => {
       </ListItem>
 
       <Collapse in={!collapsedList} timeout="auto" unmountOnExit>
-        <ConnectedFitListItem />
+        <ConnectedFitListItem
+          datasetInitialized={datasetInitialized}
+          setDatasetInitialized={setDatasetInitialized}
+        />
 
-        <ConnectedEvaluateListItem />
+        <ConnectedEvaluateListItem
+          datasetInitialized={datasetInitialized}
+          setDatasetInitialized={setDatasetInitialized}
+        />
 
         <ConnectedPredictListItem />
       </Collapse>

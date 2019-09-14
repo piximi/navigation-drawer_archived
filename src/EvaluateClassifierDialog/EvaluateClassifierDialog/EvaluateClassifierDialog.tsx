@@ -1,21 +1,20 @@
-import { Dialog, DialogContent, DialogContentText } from '@material-ui/core';
+import { Dialog, DialogContent } from '@material-ui/core';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
 import classNames from 'classnames';
-import { MetricsTable } from '../MetricsTable/MetricsTable';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import { makeStyles } from '@material-ui/styles';
-import { withStyles, Theme, createStyles } from '@material-ui/core/styles';
-import { Category, Image, Score } from '@piximi/types';
+import { Category, Image } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './EvaluateClassifierDialog.css';
-//import { createTestSet } from '@piximi/models';
+
 import {
   createTestSet,
-  createTestSetCV
+  createTestSetCV,
+  assignToSet
 } from '../../FitClassifierDialog/FitClassifierDialog/dataset';
 import * as tfvis from '@tensorflow/tfjs-vis';
 import {
@@ -31,6 +30,9 @@ type EvaluateClassifierDialogProps = {
   images: Image[];
   openedDialog: boolean;
   openedDrawer: boolean;
+  datasetInitialized: boolean;
+  setDatasetInitialized: (datasetInitialized: boolean) => void;
+  setImagesPartition: (partitions: number[]) => void;
 };
 
 const getMatrixFromArray = (array: any, size: number): number[][] => {
@@ -41,7 +43,30 @@ const getMatrixFromArray = (array: any, size: number): number[][] => {
 export const EvaluateClassifierDialog = (
   props: EvaluateClassifierDialogProps
 ) => {
-  const { categories, closeDialog, images, openedDialog, openedDrawer } = props;
+  const {
+    categories,
+    closeDialog,
+    images,
+    openedDialog,
+    openedDrawer,
+    datasetInitialized,
+    setDatasetInitialized,
+    setImagesPartition
+  } = props;
+
+  // assign each image to train- test- or validation- set
+  const initializeDatasets = () => {
+    if (datasetInitialized) {
+      return;
+    }
+    var partitions: number[] = [];
+    images.forEach((image: Image) => {
+      const setItentifier = assignToSet();
+      partitions.push(setItentifier);
+    });
+    setImagesPartition(partitions);
+    setDatasetInitialized(true);
+  };
 
   const styles = useStyles({});
   const [useCrossValidation, setUseCrossValidation] = useState<boolean>(false);
@@ -105,13 +130,19 @@ export const EvaluateClassifierDialog = (
     const lables = lableCategories.map((category: Category) => {
       return category.identifier;
     });
-    const data = { values, lables };
+    const data = { values: values, tickLabels: lables };
 
-    const surface = tfvis.visor().surface({ name: 'Confusion Matrix' });
+    const surface = tfvis.visor().surface({
+      name: 'Confusion Matrix',
+      styles: {
+        width: '650px'
+      }
+    });
     tfvis.render.confusionMatrix(surface, data);
   };
 
   const onEvaluate = async () => {
+    initializeDatasets();
     await evaluate().then(() => {});
   };
 
@@ -135,20 +166,32 @@ export const EvaluateClassifierDialog = (
         onUseCrossValidationChange={onUseCrossValidationChange}
       />
 
-      {/* <MetricsTable
-        accuracy={accuracy}
-        crossEntropy={crossEntropy}
-      /> */}
       <div>
         <Grid container spacing={3}>
           <Grid>
-            <Paper>bla={accuracy}</Paper>
+            <Paper
+              style={{
+                margin: '24px',
+                padding: '24px',
+                fontSize: 'larger'
+              }}
+            >
+              accuracy: {accuracy}
+            </Paper>
           </Grid>
         </Grid>
       </div>
 
-      <DialogContent>
-        <div id="tfjs-visor-container"></div>
+      <DialogContent style={{ padding: '0px', margin: '12px' }}>
+        <div
+          id="tfjs-visor-container"
+          style={{
+            position: 'absolute',
+            height: '100%',
+            width: '100%',
+            padding: '12px'
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

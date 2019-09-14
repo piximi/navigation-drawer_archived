@@ -2,11 +2,18 @@ import {
   Dialog,
   DialogContent,
   DialogContentText,
-  IconButton,
-  Toolbar,
   Tooltip,
-  Button
+  Button,
+  List,
+  ListItem,
+  ListItemIcon,
+  Collapse,
+  ListItemText
 } from '@material-ui/core';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Typography from '@material-ui/core/Typography';
+import Slider from '@material-ui/lab/Slider';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
@@ -19,7 +26,8 @@ import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
 import { createMobilenet } from '@piximi/models';
-import { createTrainingSet } from './dataset';
+import { useCollapseList } from '@piximi/hooks';
+import { createTrainingSet, assignToSet, setTestsetRatio } from './dataset';
 
 const optimizationAlgorithms: { [identifier: string]: any } = {
   adadelta: tensorflow.train.adadelta,
@@ -64,17 +72,8 @@ type FitClassifierDialogProps = {
   images: Image[];
   openedDialog: boolean;
   openedDrawer: boolean;
-};
-
-const TESTSET_RATIO = 0.2;
-
-const assignToSet = (): number => {
-  const rdn = Math.random();
-  if (rdn < TESTSET_RATIO) {
-    return 2;
-  } else {
-    return 0;
-  }
+  datasetInitialized: boolean;
+  setDatasetInitialized: (datasetInitialized: boolean) => void;
 };
 
 export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
@@ -84,23 +83,53 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     images,
     openedDialog,
     openedDrawer,
-    setImagesPartition
+    setImagesPartition,
+    datasetInitialized,
+    setDatasetInitialized
   } = props;
 
   const styles = useStyles({});
 
   // assign each image to train- test- or validation- set
-  const initializeDatasets = (images: Image[]) => {
+  const initializeDatasets = () => {
+    if (datasetInitialized) {
+      return;
+    }
     var partitions: number[] = [];
     images.forEach((image: Image) => {
       const setItentifier = assignToSet();
       partitions.push(setItentifier);
     });
     setImagesPartition(partitions);
+    setDatasetInitialized(true);
+  };
+
+  const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);
+  const handleChange = (event: any, newValue: any) => {
+    setDatasetSplits(newValue);
+    setTestsetRatio(datasetSplits[1] - datasetSplits[0]);
+  };
+  function valuetext(value: any) {
+    return `${value}%`;
+  }
+
+  const { collapsedList, collapseList } = useCollapseList();
+  const [
+    collapsedClasssifierSettingsList,
+    setCollapsedClasssifierSettingsList
+  ] = useState<boolean>(false);
+  const onClasssifierSettingsListClick = () => {
+    setCollapsedClasssifierSettingsList(!collapsedClasssifierSettingsList);
+  };
+  const [
+    collapsedDatasetSettingsList,
+    setCollapsedDatasetSettingsList
+  ] = useState<boolean>(false);
+  const onDatasetSettingsListClick = () => {
+    setCollapsedDatasetSettingsList(!collapsedDatasetSettingsList);
   };
 
   const [stopTraining, setStopTraining] = useState<boolean>(false);
-  const [datasetInitialized, setDatasetInitialized] = useState<boolean>(false);
   const [batchSize, setBatchSize] = useState<number>(32);
   const [epochs, setEpochs] = useState<number>(10);
   const [optimizationAlgorithm, setOptimizationAlgorithm] = useState<string>(
@@ -207,7 +236,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     const args = {
       batchSize: batchSize,
       epochs: epochs,
-      validationSplit: 0.2,
+      validationSplit: 1 - datasetSplits[1],
       callbacks: {
         onEpochEnd: async (
           epoch: number,
@@ -232,10 +261,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const onFit = async () => {
-    if (!datasetInitialized) {
-      initializeDatasets(images);
-      setDatasetInitialized(true);
-    }
+    initializeDatasets();
     await resetStopTraining();
     await fit().then(() => {});
   };
@@ -260,32 +286,97 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       />
 
       <DialogContent>
-        <DialogContentText>Classifier Settings:</DialogContentText>
+        <List dense>
+          <ListItem
+            button
+            onClick={onClasssifierSettingsListClick}
+            style={{ padding: '12px 0px' }}
+          >
+            <ListItemIcon>
+              {collapsedClasssifierSettingsList ? (
+                <ExpandLessIcon />
+              ) : (
+                <ExpandMoreIcon />
+              )}
+            </ListItemIcon>
 
-        <Form
-          batchSize={batchSize}
-          closeDialog={closeDialog}
-          epochs={epochs}
-          inputShape={inputShape}
-          learningRate={learningRate}
-          lossFunction={lossFunction}
-          onBatchSizeChange={onBatchSizeChange}
-          onEpochsChange={onEpochsChange}
-          onInputShapeChange={onInputShapeChange}
-          onLearningRateChange={onLearningRateChange}
-          onLossFunctionChange={onLossFunctionChange}
-          onOptimizationAlgorithmChange={onOptimizationAlgorithmChange}
-          openedDialog={openedDialog}
-          optimizationAlgorithm={optimizationAlgorithm}
-        />
+            <ListItemText
+              primary="Classifier Settings"
+              style={{ fontSize: '20px' }}
+            />
+          </ListItem>
 
-        <DialogContentText>Dataset Settings:</DialogContentText>
-        <Tooltip title="initialize dataset" placement="bottom">
-          <Button variant="contained" className={classes.button}>
-            Default
-          </Button>
-        </Tooltip>
+          <Collapse
+            in={collapsedClasssifierSettingsList}
+            timeout="auto"
+            unmountOnExit
+          >
+            <Form
+              batchSize={batchSize}
+              closeDialog={closeDialog}
+              epochs={epochs}
+              inputShape={inputShape}
+              learningRate={learningRate}
+              lossFunction={lossFunction}
+              onBatchSizeChange={onBatchSizeChange}
+              onEpochsChange={onEpochsChange}
+              onInputShapeChange={onInputShapeChange}
+              onLearningRateChange={onLearningRateChange}
+              onLossFunctionChange={onLossFunctionChange}
+              onOptimizationAlgorithmChange={onOptimizationAlgorithmChange}
+              openedDialog={openedDialog}
+              optimizationAlgorithm={optimizationAlgorithm}
+            />
+          </Collapse>
 
+          <ListItem
+            button
+            onClick={onDatasetSettingsListClick}
+            style={{ padding: '12px 0px' }}
+          >
+            <ListItemIcon>
+              {collapsedDatasetSettingsList ? (
+                <ExpandLessIcon />
+              ) : (
+                <ExpandMoreIcon />
+              )}
+            </ListItemIcon>
+
+            <ListItemText
+              primary="Dataset Settings"
+              style={{ fontSize: '1em' }}
+            />
+          </ListItem>
+
+          <Collapse
+            in={collapsedDatasetSettingsList}
+            timeout="auto"
+            unmountOnExit
+          >
+            <Tooltip title="Initialize dataset" placement="bottom">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={initializeDatasets}
+              >
+                Initialize Dataset
+              </Button>
+            </Tooltip>
+
+            <div style={{ padding: '12px 0px', width: '300' }}>
+              <Typography id="range-slider" gutterBottom>
+                Dataset Splits
+              </Typography>
+              <Slider
+                value={datasetSplits}
+                onChange={handleChange}
+                valueLabelDisplay="auto"
+                aria-labelledby="range-slider"
+                getAriaValueText={valuetext}
+              />
+            </div>
+          </Collapse>
+        </List>
         <DialogContentText>Training history:</DialogContentText>
 
         <History data={trainingLossHistory} />

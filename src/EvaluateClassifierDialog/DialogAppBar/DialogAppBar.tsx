@@ -71,14 +71,9 @@ export const DialogAppBar = (props: DialogAppBarProps) => {
         </Tooltip>
 
         <Tooltip title="use cross validation" placement="bottom">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={useCrossValidation}
-                onChange={onUseCrossValidationChange}
-              />
-            }
-            label="use cross validation"
+          <Switch
+            checked={useCrossValidation}
+            onChange={onUseCrossValidationChange}
           />
         </Tooltip>
 

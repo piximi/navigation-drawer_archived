@@ -4,15 +4,22 @@ import BarChartIcon from '@material-ui/icons/BarChart';
 import { useTranslation } from 'react-i18next';
 import { useDialog } from '@piximi/hooks';
 import { Category, Image } from '@piximi/types';
-import { EvaluateClassifierDialog } from '../../../EvaluateClassifierDialog/EvaluateClassifierDialog';
+import { ConnectedEvaluateClassifierDialog } from '../../../EvaluateClassifierDialog/EvaluateClassifierDialog';
 
 type EvaluateListItemProbs = {
   categories: Category[];
   images: Image[];
+  datasetInitialized: boolean;
+  setDatasetInitialized: (datasetInitialized: boolean) => void;
 };
 
 export const EvaluateListItem = (probs: EvaluateListItemProbs) => {
-  const { categories, images } = probs;
+  const {
+    categories,
+    images,
+    datasetInitialized,
+    setDatasetInitialized
+  } = probs;
 
   const { openedDialog, openDialog, closeDialog } = useDialog();
 
@@ -32,12 +39,12 @@ export const EvaluateListItem = (probs: EvaluateListItemProbs) => {
         <ListItemText primary={translation('Evaluate')} />
       </ListItem>
 
-      <EvaluateClassifierDialog
-        categories={categories}
+      <ConnectedEvaluateClassifierDialog
         closeDialog={closeDialog}
-        images={images}
         openedDialog={openedDialog}
         openedDrawer={true}
+        datasetInitialized={datasetInitialized}
+        setDatasetInitialized={setDatasetInitialized}
       />
     </React.Fragment>
   );
