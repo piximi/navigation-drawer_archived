@@ -13,6 +13,7 @@ import { useCollapseList } from '@piximi/hooks';
 import { ConnectedFitListItem } from '../FitListItem/ConnectedFitListItem';
 import { ConnectedEvaluateListItem } from '../EvaluateListItem/ConnectedEvaluateListItem';
 import { ConnectedPredictListItem } from '../PredictListItem/ConnectedPredictListItem';
+import { ConnectedGradCAMListItem } from '../gradCAMItem/ConnectedGradCAMListItem';
 
 export const ClassifierList = () => {
   const { collapsedList, collapseList } = useCollapseList();
@@ -41,6 +42,7 @@ export const ClassifierList = () => {
         />
 
         <ConnectedPredictListItem />
+        <ConnectedGradCAMListItem />
       </Collapse>
     </List>
   );

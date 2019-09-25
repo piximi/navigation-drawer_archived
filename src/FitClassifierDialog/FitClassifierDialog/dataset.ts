@@ -158,7 +158,7 @@ const findCategoryIndex = (
   );
 };
 
-const tensorImageData = async (image: Image) => {
+export const tensorImageData = async (image: Image) => {
   const data = await ImageJS.Image.load(image.data);
 
   return tensorflow.tidy(() => {

@@ -132,8 +132,11 @@ export const EvaluateClassifierDialog = (
     });
     const data = { values: values, tickLabels: lables };
 
+    //var element = ReactDOM.findDOMNode('evaluationID') as HTMLElement;
+
     const surface = tfvis.visor().surface({
       name: 'Confusion Matrix',
+
       styles: {
         width: '650px'
       }
@@ -168,7 +171,7 @@ export const EvaluateClassifierDialog = (
 
       <div>
         <Grid container spacing={3}>
-          <Grid>
+          <Grid id="evaluationID">
             <Paper
               style={{
                 margin: '24px',
