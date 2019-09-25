@@ -36,6 +36,17 @@ const optimizationAlgorithms: { [identifier: string]: any } = {
   sgd: tensorflow.train.sgd
 };
 
+const lossFunctions: { [identifier: string]: any } = {
+  absoluteDifference: tensorflow.losses.absoluteDifference,
+  cosineDistance: tensorflow.losses.cosineDistance,
+  hingeLoss: tensorflow.losses.hingeLoss,
+  huberLoss: tensorflow.losses.huberLoss,
+  logLoss: tensorflow.losses.logLoss,
+  meanSquaredError: tensorflow.losses.meanSquaredError,
+  sigmoidCrossEntropy: tensorflow.losses.sigmoidCrossEntropy,
+  categoricalCrossentropy: tensorflow.losses.softmaxCrossEntropy
+};
+
 const createModel = async (numberOfClasses: number) => {
   const resource =
     'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json';
@@ -236,13 +247,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
     const model = await createModel(numberOfClasses);
 
-    // const trainingSet = await createTrainingSet(categories, images, 2);
-
-    // const x = trainingSet.data;
-    // const y = trainingSet.lables;
-
     model.compile({
-      loss: lossFunction,
+      loss: lossFunctions[lossFunction],
       metrics: ['accuracy'],
       optimizer: optimizationAlgorithms[optimizationAlgorithm](learningRate)
     });
@@ -279,12 +285,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       if (endBatchIndex > labledData.length) {
         var batchData = labledData.slice(startBatchIndex);
         training = false;
-        console.log('last batch smaller');
       } else {
         var batchData = labledData.slice(startBatchIndex, endBatchIndex);
       }
-      console.log('after size is calculated');
-      console.log(tensorflow.memory());
       const trainingSet = await createTrainingSet(categories, batchData, 2);
       const trainData = trainingSet.data;
       const trainLables = trainingSet.lables;
@@ -300,8 +303,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       i++;
     }
     console.log('finished Trainin!!');
-
-    //const history = await model.fit(x, y, args);
 
     await model.save('indexeddb://mobilenet');
   };

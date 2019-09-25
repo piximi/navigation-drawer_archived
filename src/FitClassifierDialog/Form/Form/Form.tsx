@@ -19,7 +19,6 @@ const lossFunctions = {
   logLoss: 'Log',
   meanSquaredError: 'Mean squared error (MSE)',
   sigmoidCrossEntropy: 'Sigmoid cross entropy',
-  softmaxCrossEntropy: 'Softmax cross entropy',
   categoricalCrossentropy: 'Categorical cross entropy'
 };
 
