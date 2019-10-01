@@ -16,6 +16,9 @@ export const OpenClassifierMenuItem = (props: any) => {
 
       openClassifier(classifier.categories, classifier.images, classifier.name);
     };
+  };
+
+  const onClick = () => {
     closeMenu();
   };
 
@@ -31,7 +34,7 @@ export const OpenClassifierMenuItem = (props: any) => {
       />
 
       <label htmlFor="open-classifier">
-        <MenuItem>
+        <MenuItem onClick={onClick}>
           <ListItemText primary="Open classifier" />
         </MenuItem>
       </label>

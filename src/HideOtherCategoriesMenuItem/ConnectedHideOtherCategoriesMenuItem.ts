@@ -28,7 +28,9 @@ const mapDispatchToProps = (dispatch: Dispatch) => {
   };
 };
 
-export const ConnectedHideOtherCategoriesMenuItem = connect(
+const ConnectedHideOtherCategoriesMenuItem = connect(
   mapStateToProps,
   mapDispatchToProps
 )(HideOtherCategoriesMenuItem);
+
+export default ConnectedHideOtherCategoriesMenuItem;

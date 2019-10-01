@@ -1,19 +1,4 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogContentText,
-  Tooltip,
-  Button,
-  List,
-  ListItem,
-  ListItemIcon,
-  Collapse,
-  ListItemText
-} from '@material-ui/core';
-import ExpandLessIcon from '@material-ui/icons/ExpandLess';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Typography from '@material-ui/core/Typography';
-import Slider from '@material-ui/lab/Slider';
+import { Dialog, DialogContent } from '@material-ui/core';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
@@ -25,63 +10,7 @@ import { Category, Image } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
-import { createMobilenet } from '@piximi/models';
-import { useCollapseList } from '@piximi/hooks';
-import { createTrainingSet, assignToSet, setTestsetRatio } from './dataset';
-
-const optimizationAlgorithms: { [identifier: string]: any } = {
-  adadelta: tensorflow.train.adadelta,
-  adam: tensorflow.train.adam,
-  adamax: tensorflow.train.adamax,
-  rmsprop: tensorflow.train.rmsprop,
-  sgd: tensorflow.train.sgd
-};
-
-const createModel = async (numberOfClasses: number) => {
-  const resource =
-    'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json';
-
-  const mobilenet = await tensorflow.loadLayersModel(resource);
-
-  const layer = mobilenet.getLayer('conv_pw_13_relu');
-
-  const backbone = tensorflow.model({
-    inputs: mobilenet.inputs,
-    outputs: layer.output
-  });
-
-  const a = tensorflow.layers.globalAveragePooling2d({
-    inputShape: backbone.outputs[0].shape.slice(1)
-  });
-
-  const b = tensorflow.layers.reshape({
-    targetShape: [1, 1, backbone.outputs[0].shape[3]]
-  });
-
-  const c = tensorflow.layers.dropout({
-    rate: 0.001
-  });
-
-  const d = tensorflow.layers.conv2d({
-    filters: numberOfClasses,
-    kernelSize: [1, 1]
-  });
-
-  const e = tensorflow.layers.reshape({
-    targetShape: [numberOfClasses]
-  });
-
-  const f = tensorflow.layers.activation({
-    activation: 'softmax'
-  });
-
-  const config = {
-    layers: [...backbone.layers, a, b, c, d, e, f]
-  };
-
-  const model = tensorflow.sequential(config);
-  return model;
-};
+import { createModel, createTrainAndTestSet } from '@piximi/models';
 
 const useStyles = makeStyles(styles);
 
@@ -89,74 +18,23 @@ type LossHistory = { x: number; y: number }[];
 
 type FitClassifierDialogProps = {
   categories: Category[];
-  setImagesPartition: (partitions: number[]) => void;
   closeDialog: () => void;
   images: Image[];
   openedDialog: boolean;
   openedDrawer: boolean;
-  datasetInitialized: boolean;
-  setDatasetInitialized: (datasetInitialized: boolean) => void;
 };
 
 export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
-  const {
-    categories,
-    closeDialog,
-    images,
-    openedDialog,
-    openedDrawer,
-    setImagesPartition,
-    datasetInitialized,
-    setDatasetInitialized
-  } = props;
+  const { categories, closeDialog, images, openedDialog, openedDrawer } = props;
 
   const styles = useStyles({});
-
-  // assign each image to train- test- or validation- set
-  const initializeDatasets = () => {
-    if (datasetInitialized) {
-      return;
-    }
-    var partitions: number[] = [];
-    images.forEach((image: Image) => {
-      const setItentifier = assignToSet();
-      partitions.push(setItentifier);
-    });
-    setImagesPartition(partitions);
-    setDatasetInitialized(true);
-  };
-
-  const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);
-  const handleChange = (event: any, newValue: any) => {
-    setDatasetSplits(newValue);
-    setTestsetRatio(datasetSplits[1] - datasetSplits[0]);
-  };
-  function valuetext(value: any) {
-    return `${value}%`;
-  }
-
-  const { collapsedList, collapseList } = useCollapseList();
-  const [
-    collapsedClasssifierSettingsList,
-    setCollapsedClasssifierSettingsList
-  ] = useState<boolean>(false);
-  const onClasssifierSettingsListClick = () => {
-    setCollapsedClasssifierSettingsList(!collapsedClasssifierSettingsList);
-  };
-  const [
-    collapsedDatasetSettingsList,
-    setCollapsedDatasetSettingsList
-  ] = useState<boolean>(false);
-  const onDatasetSettingsListClick = () => {
-    setCollapsedDatasetSettingsList(!collapsedDatasetSettingsList);
-  };
 
   const [stopTraining, setStopTraining] = useState<boolean>(false);
   const [batchSize, setBatchSize] = useState<number>(32);
   const [epochs, setEpochs] = useState<number>(10);
-  const [optimizationAlgorithm, setOptimizationAlgorithm] = useState<string>(
-    'adam'
-  );
+  const [optimizationAlgorithm, setOptimizationAlgorithm] = useState<
+    tensorflow.Optimizer
+  >(tensorflow.train.adam);
   const [learningRate, setLearningRate] = useState<number>(0.01);
   const [lossFunction, setLossFunction] = useState<string>(
     'categoricalCrossentropy'
@@ -189,7 +67,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const resetStopTraining = async () => {
-    setStopTraining(false);
+    console.log('reset stop');
+    await setStopTraining(false);
   };
 
   const onInputShapeChange = (event: React.FormEvent<EventTarget>) => {
@@ -215,8 +94,10 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     event: React.FormEvent<EventTarget>
   ) => {
     const target = event.target as HTMLInputElement;
+    //const value = target.value as tensorflow.Optimizer;
+    const value = tensorflow.train.adam;
 
-    setOptimizationAlgorithm(target.value);
+    setOptimizationAlgorithm(value(0.1));
   };
 
   const className = classNames(styles.content, styles.contentLeft, {
@@ -235,39 +116,50 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       return;
     }
 
-    const model = await createModel(numberOfClasses);
+    await resetStopTraining();
 
-    const trainingSet = await createTrainingSet(categories, images, 2);
+    const model = await createModel(
+      numberOfClasses,
+      100,
+      lossFunction,
+      ['accuracy'],
+      tensorflow.train.adam(learningRate)
+    );
 
-    const x = trainingSet.data;
-    const y = trainingSet.lables;
+    const { trainData, testData } = await createTrainAndTestSet(
+      categories,
+      images
+    );
 
-    model.compile({
-      loss: lossFunction,
-      metrics: ['accuracy'],
-      optimizer: optimizationAlgorithms[optimizationAlgorithm](learningRate)
-    });
+    const x = trainData.data;
+    const y = trainData.lables;
 
     const args = {
       batchSize: batchSize,
-      epochs: epochs,
-      validationSplit: 1 - datasetSplits[1],
       callbacks: {
         onEpochEnd: async (
           epoch: number,
           logs?: tensorflow.Logs | undefined
         ) => {
           if (logs) {
-            console.log(
-              `onEpochEnd ${epoch}, loss: ${logs.loss}, accuracy: ${logs.accuracy}`
-            );
+            console.log(`onEpochEnd ${epoch}, loss: ${logs.loss}`);
           }
           if (stopTraining) {
             console.log('test train stop');
             model.stopTraining = true;
           }
+        },
+        onBatchEnd: async (
+          batch: number,
+          logs?: tensorflow.Logs | undefined
+        ) => {
+          setTrainingLossHistory([
+            ...trainingLossHistory,
+            { x: batch, y: logs!.loss }
+          ]);
         }
-      }
+      },
+      epochs: epochs
     };
 
     const history = await model.fit(x, y, args);
@@ -276,9 +168,13 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const onFit = async () => {
-    initializeDatasets();
-    await resetStopTraining();
+    const startTime = new Date().getTime();
+
     await fit().then(() => {});
+
+    const endTime = new Date().getTime();
+    const seconds = Math.round((endTime - startTime) / 1000); //in seconds
+    console.log(seconds + ' seconds');
   };
 
   return (
@@ -291,7 +187,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       onClose={closeDialog}
       open={openedDialog}
       TransitionComponent={DialogTransition}
-      style={{ zIndex: 1203 }}
+      style={{ zIndex: 1100 }}
     >
       <DialogAppBar
         onStopTrainingChange={onStopTrainingChange}
@@ -301,100 +197,24 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       />
 
       <DialogContent>
-        <List dense>
-          <ListItem
-            button
-            onClick={onClasssifierSettingsListClick}
-            style={{ padding: '12px 0px' }}
-          >
-            <ListItemIcon>
-              {collapsedClasssifierSettingsList ? (
-                <ExpandLessIcon />
-              ) : (
-                <ExpandMoreIcon />
-              )}
-            </ListItemIcon>
-
-            <ListItemText
-              primary="Classifier Settings"
-              style={{ fontSize: '20px' }}
-            />
-          </ListItem>
-
-          <Collapse
-            in={collapsedClasssifierSettingsList}
-            timeout="auto"
-            unmountOnExit
-          >
-            <Form
-              batchSize={batchSize}
-              closeDialog={closeDialog}
-              epochs={epochs}
-              inputShape={inputShape}
-              learningRate={learningRate}
-              lossFunction={lossFunction}
-              onBatchSizeChange={onBatchSizeChange}
-              onEpochsChange={onEpochsChange}
-              onInputShapeChange={onInputShapeChange}
-              onLearningRateChange={onLearningRateChange}
-              onLossFunctionChange={onLossFunctionChange}
-              onOptimizationAlgorithmChange={onOptimizationAlgorithmChange}
-              openedDialog={openedDialog}
-              optimizationAlgorithm={optimizationAlgorithm}
-            />
-          </Collapse>
-
-          <ListItem
-            button
-            onClick={onDatasetSettingsListClick}
-            style={{ padding: '12px 0px' }}
-          >
-            <ListItemIcon>
-              {collapsedDatasetSettingsList ? (
-                <ExpandLessIcon />
-              ) : (
-                <ExpandMoreIcon />
-              )}
-            </ListItemIcon>
-
-            <ListItemText
-              primary="Dataset Settings"
-              style={{ fontSize: '1em' }}
-            />
-          </ListItem>
-
-          <Collapse
-            in={collapsedDatasetSettingsList}
-            timeout="auto"
-            unmountOnExit
-          >
-            <Tooltip title="Initialize dataset" placement="bottom">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={initializeDatasets}
-              >
-                Initialize Dataset
-              </Button>
-            </Tooltip>
-
-            <div style={{ padding: '12px 0px', width: '300' }}>
-              <Typography id="range-slider" gutterBottom>
-                Dataset Splits
-              </Typography>
-              <Slider
-                value={datasetSplits}
-                onChange={handleChange}
-                valueLabelDisplay="auto"
-                aria-labelledby="range-slider"
-                getAriaValueText={valuetext}
-              />
-            </div>
-          </Collapse>
-        </List>
-        <DialogContentText>Training history:</DialogContentText>
-
         <History data={trainingLossHistory} />
+
+        <Form
+          batchSize={batchSize}
+          closeDialog={closeDialog}
+          epochs={epochs}
+          inputShape={inputShape}
+          learningRate={learningRate}
+          lossFunction={lossFunction}
+          onBatchSizeChange={onBatchSizeChange}
+          onEpochsChange={onEpochsChange}
+          onInputShapeChange={onInputShapeChange}
+          onLearningRateChange={onLearningRateChange}
+          onLossFunctionChange={onLossFunctionChange}
+          onOptimizationAlgorithmChange={onOptimizationAlgorithmChange}
+          openedDialog={openedDialog}
+          optimizationAlgorithm={optimizationAlgorithm}
+        />
       </DialogContent>
     </Dialog>
   );

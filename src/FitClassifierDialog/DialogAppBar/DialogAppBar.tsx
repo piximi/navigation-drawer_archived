@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {
   ArrowBack,
-  Stop,
+  PauseCircleOutline,
   PlayCircleOutline,
   ReplayRounded
 } from '@material-ui/icons';
@@ -70,7 +70,7 @@ export const DialogAppBar = (props: any) => {
             onClick={onStopTrainingChange}
             href={''}
           >
-            <Stop />
+            <PauseCircleOutline />
           </IconButton>
         </Tooltip>
 
