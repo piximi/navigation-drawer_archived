@@ -13,7 +13,6 @@ import {
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Typography from '@material-ui/core/Typography';
-import Slider from '@material-ui/lab/Slider';
 import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
@@ -376,19 +375,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
                 Initialize Dataset
               </Button>
             </Tooltip>
-
-            <div style={{ padding: '12px 0px', width: '300' }}>
-              <Typography id="range-slider" gutterBottom>
-                Dataset Splits
-              </Typography>
-              <Slider
-                value={datasetSplits}
-                onChange={handleChange}
-                valueLabelDisplay="auto"
-                aria-labelledby="range-slider"
-                getAriaValueText={valuetext}
-              />
-            </div>
           </Collapse>
         </List>
         <DialogContentText>Training history:</DialogContentText>
