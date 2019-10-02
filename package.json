@@ -143,8 +143,7 @@
     "test": "jest",
     "storybook": "start-storybook -p 9009",
     "build-storybook": "build-storybook -c .storybook -o .out",
-    "deploy-storybook": "storybook-to-ghpages",
-    "postinstall": "rimraf node_modules/preact/*/preact.d.ts"
+    "deploy-storybook": "storybook-to-ghpages"
   },
   "sideEffects": false,
   "types": "./dist/index.d.ts",
