@@ -10,7 +10,7 @@
     "url": "https://github.com/piximi/navigation-drawer/issues"
   },
   "dependencies": {
-    "@material-ui/core": "4.1.2",
+    "@material-ui/core": "4.5.0",
     "@material-ui/icons": "4.2.1",
     "@material-ui/lab": "^4.0.0-alpha.17",
     "@material-ui/styles": "4.1.2",
