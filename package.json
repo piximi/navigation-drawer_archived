@@ -12,8 +12,7 @@
   "dependencies": {
     "@material-ui/core": "4.5.0",
     "@material-ui/icons": "4.2.1",
-    "@material-ui/lab": "^4.0.0-alpha.17",
-    "@material-ui/styles": "4.1.2",
+    "@material-ui/styles": "4.5.0",
     "@piximi/components": "^0.1.15",
     "@piximi/hooks": "^0.1.11",
     "@piximi/models": "^0.1.4",
