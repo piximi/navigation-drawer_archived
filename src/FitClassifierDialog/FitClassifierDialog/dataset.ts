@@ -4,13 +4,9 @@ import * as tensorflow from '@tensorflow/tfjs';
 
 export const createTrainingSet = async (
   categories: Category[],
-  images: Image[],
+  labledData: Image[],
   numberOfClasses: number
 ) => {
-  const labledData = images.filter((image: Image) => {
-    return image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000';
-  });
-
   const trainingData: Image[] = [];
   for (let i = 0; i < labledData.length; i++) {
     if (labledData[i].partition === 0) {

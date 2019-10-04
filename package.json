@@ -17,7 +17,7 @@
     "@piximi/hooks": "^0.1.11",
     "@piximi/models": "^0.1.4",
     "@piximi/store": "^0.1.23",
-    "@tensorflow/tfjs": "^1.2.2",
+    "@tensorflow/tfjs": "^1.2.9",
     "@tensorflow/tfjs-vis": "^1.1.0",
     "@types/mathjs": "^6.0.2",
     "axios": "^0.19.0",
@@ -139,6 +139,8 @@
   },
   "scripts": {
     "build": "rm -rf ./dist && tsc -p ./tsconfig.json",
+    "buildLocal": "tsc -p ./tsconfig.json",
+    "yalcPush": "tsc -p ./tsconfig.json && yalc push",
     "precommit": "lint-staged",
     "test": "jest",
     "storybook": "start-storybook -p 9009",

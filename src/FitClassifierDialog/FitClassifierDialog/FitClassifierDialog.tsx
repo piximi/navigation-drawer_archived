@@ -227,7 +227,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     paper: styles.paper
   };
 
-  const fit = async () => {
+  const fit = async (labledData: Image[]) => {
     const numberOfClasses: number = categories.length - 1;
     if (numberOfClasses === 1) {
       alert('The classifier must have at least two classes!');
@@ -236,10 +236,10 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
     const model = await createModel(numberOfClasses);
 
-    const trainingSet = await createTrainingSet(categories, images, 2);
+    // const trainingSet = await createTrainingSet(categories, images, 2);
 
-    const x = trainingSet.data;
-    const y = trainingSet.lables;
+    // const x = trainingSet.data;
+    // const y = trainingSet.lables;
 
     model.compile({
       loss: lossFunction,
@@ -248,9 +248,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     });
 
     const args = {
-      batchSize: batchSize,
       epochs: epochs,
-      validationSplit: 1 - datasetSplits[1],
+      validationSplit: 1 - datasetSplits[1] / 100,
       callbacks: {
         onEpochEnd: async (
           epoch: number,
@@ -269,15 +268,53 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       }
     };
 
-    const history = await model.fit(x, y, args);
+    // only create dataset
+    var training = true;
+    var i = 0;
+    while (training) {
+      console.log('new batch!!');
+      console.log(tensorflow.memory());
+      var startBatchIndex = i * batchSize;
+      var endBatchIndex = (i + 1) * batchSize - 1;
+      if (endBatchIndex > labledData.length) {
+        var batchData = labledData.slice(startBatchIndex);
+        training = false;
+        console.log('last batch smaller');
+      } else {
+        var batchData = labledData.slice(startBatchIndex, endBatchIndex);
+      }
+      console.log('after size is calculated');
+      console.log(tensorflow.memory());
+      const trainingSet = await createTrainingSet(categories, batchData, 2);
+      const trainData = trainingSet.data;
+      const trainLables = trainingSet.lables;
+      console.log('after dataset is created');
+      console.log(tensorflow.memory());
+      const history = await model.fit(trainData, trainLables, args);
+      console.log('after model was fitted');
+      console.log(tensorflow.memory());
+      trainData.dispose();
+      trainLables.dispose();
+      console.log('after dataset was disposed');
+      console.log(tensorflow.memory());
+      i++;
+    }
+    console.log('finished Trainin!!');
+
+    //const history = await model.fit(x, y, args);
 
     await model.save('indexeddb://mobilenet');
   };
 
   const onFit = async () => {
+    const labledData = images.filter((image: Image) => {
+      return (
+        image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000'
+      );
+    });
     initializeDatasets();
-    await resetStopTraining();
-    await fit().then(() => {});
+    resetStopTraining();
+    fit(labledData).then(() => {});
   };
 
   return (
