@@ -26,6 +26,10 @@ export const createTrainingSet = async (
     tensorflow.oneHot(trainDataSet.lables, numberOfClasses)
   );
 
+  trainDataSet.data.forEach((tensor: tensorflow.Tensor<tensorflow.Rank>) =>
+    tensor.dispose()
+  );
+
   return { data: concatenatedTensorData, lables: concatenatedLableData };
 };
 
@@ -36,8 +40,6 @@ export const createTestSet = async (
   const labledData = images.filter((image: Image) => {
     return image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000';
   });
-  console.log('labledData data length:');
-  console.log(labledData.length);
 
   const testData: Image[] = [];
   for (let i = 0; i < labledData.length; i++) {
@@ -45,23 +47,6 @@ export const createTestSet = async (
       testData.push(labledData[i]);
     }
   }
-  console.log('test data length:');
-  console.log(testData.length);
-
-  const testDataSet = await createLabledTensorflowDataSet(testData, categories);
-
-  return { data: testDataSet.data, lables: testDataSet.lables };
-};
-
-export const createTestSetCV = async (
-  categories: Category[],
-  images: Image[]
-) => {
-  const testData = images.filter((image: Image) => {
-    return image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000';
-  });
-  console.log('test data length:');
-  console.log(testData.length);
 
   const testDataSet = await createLabledTensorflowDataSet(testData, categories);
 
@@ -108,9 +93,7 @@ const createLabledTensorflowDataSet = async (
 
   for (const image of labledData) {
     tensorData.push(await tensorImageData(image));
-    tensorLables.push(
-      findCategoryIndex(categories, image.categoryIdentifier) - 1
-    );
+    tensorLables.push(findCategoryIndex(categories, image.categoryIdentifier));
   }
 
   return { data: tensorData, lables: tensorLables };
@@ -154,7 +137,7 @@ const findCategoryIndex = (
   );
 };
 
-const tensorImageData = async (image: Image) => {
+export const tensorImageData = async (image: Image) => {
   const data = await ImageJS.Image.load(image.data);
 
   return tensorflow.tidy(() => {

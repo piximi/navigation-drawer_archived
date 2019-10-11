@@ -106,9 +106,6 @@
   "main": "./dist/index.js",
   "name": "@piximi/navigation-drawer",
   "peerDependencies": {
-    "@material-ui/core": "4.4.2",
-    "@material-ui/icons": "4.2.1",
-    "@material-ui/styles": "4.1.2",
     "@piximi/components": "^0.1.12",
     "@piximi/hooks": "^0.1.11",
     "@piximi/store": "^0.1.27",

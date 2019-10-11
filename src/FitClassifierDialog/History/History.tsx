@@ -3,17 +3,29 @@ import { makeStyles } from '@material-ui/core/styles';
 import { VictoryAxis, VictoryChart, VictoryLine, VictoryTheme } from 'victory';
 import { Grid, Typography } from '@material-ui/core';
 import { styles } from './History.css';
+import * as tfvis from '@tensorflow/tfjs-vis';
 
 type Data = { x: Number; y: Number }[];
 
-type HistoryProps = { data: Data };
+type HistoryProps = {
+  lossData: Data;
+  validationLossData: Data;
+  accuracyData: Data;
+  validationAccuracyData: Data;
+};
 
 const useStyles = makeStyles(styles);
 
 export const History = (props: HistoryProps) => {
-  const { data } = props;
+  const {
+    lossData,
+    validationLossData,
+    accuracyData,
+    validationAccuracyData
+  } = props;
 
   const classes = useStyles();
+  debugger;
 
   return (
     <Grid container spacing={2}>
@@ -39,7 +51,11 @@ export const History = (props: HistoryProps) => {
             theme={VictoryTheme.material}
           />
 
-          <VictoryLine data={data} />
+          <VictoryLine data={lossData} style={{ data: { stroke: 'red' } }} />
+          <VictoryLine
+            data={validationLossData}
+            style={{ data: { stroke: 'green' } }}
+          />
         </VictoryChart>
       </Grid>
 
@@ -65,7 +81,14 @@ export const History = (props: HistoryProps) => {
             theme={VictoryTheme.material}
           />
 
-          <VictoryLine data={data} />
+          <VictoryLine
+            data={accuracyData}
+            style={{ data: { stroke: 'red' } }}
+          />
+          <VictoryLine
+            data={validationAccuracyData}
+            style={{ data: { stroke: 'green' } }}
+          />
         </VictoryChart>
       </Grid>
     </Grid>

@@ -27,6 +27,7 @@ import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
 import { useCollapseList } from '@piximi/hooks';
 import { createTrainingSet, assignToSet, setTestsetRatio } from './dataset';
+import { createModel, createMobileNet } from './networks';
 
 const optimizationAlgorithms: { [identifier: string]: any } = {
   adadelta: tensorflow.train.adadelta,
@@ -47,50 +48,24 @@ const lossFunctions: { [identifier: string]: any } = {
   categoricalCrossentropy: tensorflow.losses.softmaxCrossEntropy
 };
 
-const createModel = async (numberOfClasses: number) => {
-  const resource =
-    'https://storage.googleapis.com/tfjs-models/tfjs/mobilenet_v1_0.25_224/model.json';
+// Fisher-Yates Shuffle,
+const shuffleImages = (array: Image[]) => {
+  let counter = array.length;
 
-  const mobilenet = await tensorflow.loadLayersModel(resource);
+  // While there are elements in the array
+  while (counter > 0) {
+    // Pick a random index
+    let index = Math.floor(Math.random() * counter);
 
-  const layer = mobilenet.getLayer('conv_pw_13_relu');
+    // Decrease counter by 1
+    counter--;
 
-  const backbone = tensorflow.model({
-    inputs: mobilenet.inputs,
-    outputs: layer.output
-  });
-
-  const a = tensorflow.layers.globalAveragePooling2d({
-    inputShape: backbone.outputs[0].shape.slice(1)
-  });
-
-  const b = tensorflow.layers.reshape({
-    targetShape: [1, 1, backbone.outputs[0].shape[3]]
-  });
-
-  const c = tensorflow.layers.dropout({
-    rate: 0.001
-  });
-
-  const d = tensorflow.layers.conv2d({
-    filters: numberOfClasses,
-    kernelSize: [1, 1]
-  });
-
-  const e = tensorflow.layers.reshape({
-    targetShape: [numberOfClasses]
-  });
-
-  const f = tensorflow.layers.activation({
-    activation: 'softmax'
-  });
-
-  const config = {
-    layers: [...backbone.layers, a, b, c, d, e, f]
-  };
-
-  const model = tensorflow.sequential(config);
-  return model;
+    // And swap the last element with it
+    let temp = array[counter];
+    array[counter] = array[index];
+    array[index] = temp;
+  }
+  return array;
 };
 
 const useStyles = makeStyles(styles);
@@ -168,17 +143,42 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     'adam'
   );
   const [learningRate, setLearningRate] = useState<number>(0.01);
-  const [lossFunction, setLossFunction] = useState<string>(
-    'categoricalCrossentropy'
-  );
+  const [lossFunction, setLossFunction] = useState<string>('meanSquaredError');
   const [inputShape, setInputShape] = useState<string>('224, 224, 3');
-  const [trainingLossHistory, setTrainingLossHistory] = useState<LossHistory>([
-    { x: 0, y: 0 }
-  ]);
+
+  const [trainingLossHistory, setTrainingLossHistory] = useState<LossHistory>(
+    []
+  );
+  const updateLossHistory = (x: number, y: number) => {
+    setTrainingLossHistory(trainingLossHistory.concat({ x, y }));
+  };
 
   const [trainingAccuracyHistory, setTrainingAccuracyHistory] = useState<
-    number[]
+    LossHistory
   >([]);
+  const updateAccuracHistory = (x: number, y: number) => {
+    setTrainingAccuracyHistory(trainingAccuracyHistory.concat({ x, y }));
+  };
+
+  const [
+    trainingValidationAccuracyHistory,
+    setTrainingValidationAccuracyHistory
+  ] = useState<LossHistory>([]);
+  const updateValidationAccuracHistory = (x: number, y: number) => {
+    setTrainingValidationAccuracyHistory(
+      trainingValidationAccuracyHistory.concat({ x, y })
+    );
+  };
+
+  const [
+    trainingValidationLossHistory,
+    setTrainingValidationLossHistory
+  ] = useState<LossHistory>([]);
+  const updateValidationLossHistory = (x: number, y: number) => {
+    setTrainingValidationLossHistory(
+      trainingValidationLossHistory.concat({ x, y })
+    );
+  };
 
   const onBatchSizeChange = (event: React.FormEvent<EventTarget>) => {
     const target = event.target as HTMLInputElement;
@@ -253,8 +253,11 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       optimizer: optimizationAlgorithms[optimizationAlgorithm](learningRate)
     });
 
+    var counter = 0;
+
     const args = {
       epochs: epochs,
+      shuffle: true,
       validationSplit: 1 - datasetSplits[1] / 100,
       callbacks: {
         onEpochEnd: async (
@@ -262,24 +265,23 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
           logs?: tensorflow.Logs | undefined
         ) => {
           if (logs) {
-            console.log(
-              `onEpochEnd ${epoch}, loss: ${logs.loss}, accuracy: ${logs.accuracy}`
-            );
+            updateLossHistory(counter, logs.loss);
+            updateAccuracHistory(counter, logs.acc);
+            updateValidationAccuracHistory(counter, logs.val_acc);
+            updateValidationLossHistory(counter, logs.val_loss);
+            counter++;
           }
           if (stopTraining) {
-            console.log('test train stop');
             model.stopTraining = true;
           }
         }
       }
     };
 
-    // only create dataset
+    // train network in batches, reduce memory usage
     var training = true;
     var i = 0;
     while (training) {
-      console.log('new batch!!');
-      console.log(tensorflow.memory());
       var startBatchIndex = i * batchSize;
       var endBatchIndex = (i + 1) * batchSize - 1;
       if (endBatchIndex > labledData.length) {
@@ -291,18 +293,13 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       const trainingSet = await createTrainingSet(categories, batchData, 2);
       const trainData = trainingSet.data;
       const trainLables = trainingSet.lables;
-      console.log('after dataset is created');
-      console.log(tensorflow.memory());
       const history = await model.fit(trainData, trainLables, args);
-      console.log('after model was fitted');
-      console.log(tensorflow.memory());
       trainData.dispose();
       trainLables.dispose();
-      console.log('after dataset was disposed');
-      console.log(tensorflow.memory());
       i++;
     }
-    console.log('finished Trainin!!');
+
+    console.log('finished, saving the model');
 
     await model.save('indexeddb://mobilenet');
   };
@@ -315,7 +312,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     });
     initializeDatasets();
     resetStopTraining();
-    fit(labledData).then(() => {});
+    fit(shuffleImages(labledData)).then(() => {});
   };
 
   return (
@@ -431,7 +428,12 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
         </List>
         <DialogContentText>Training history:</DialogContentText>
 
-        <History data={trainingLossHistory} />
+        <History
+          lossData={trainingLossHistory}
+          validationAccuracyData={trainingValidationLossHistory}
+          accuracyData={trainingAccuracyHistory}
+          validationLossData={trainingValidationAccuracyHistory}
+        />
       </DialogContent>
     </Dialog>
   );
