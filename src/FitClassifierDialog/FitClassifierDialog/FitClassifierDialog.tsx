@@ -26,8 +26,14 @@ import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
 import { useCollapseList } from '@piximi/hooks';
-import { createTrainingSet, assignToSet, setTestsetRatio } from './dataset';
+import {
+  createTrainingSet,
+  assignToSet,
+  setTestsetRatio,
+  createAutotunerDataSet
+} from './dataset';
 import { createModel, createMobileNet } from './networks';
+import * as autotuner from '@piximi/autotuner';
 
 const optimizationAlgorithms: { [identifier: string]: any } = {
   adadelta: tensorflow.train.adadelta,
@@ -315,6 +321,66 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     fit(shuffleImages(labledData)).then(() => {});
   };
 
+  enum LossFunction {
+    'absoluteDifference',
+    'cosineDistance',
+    'hingeLoss',
+    'huberLoss',
+    'logLoss',
+    'meanSquaredError',
+    'sigmoidCrossEntropy',
+    'softmaxCrossEntropy',
+    'categoricalCrossentropy'
+  }
+  const onParameterTuning = async () => {
+    const numberOfClasses: number = categories.length - 1;
+    const labledData = images.filter((image: Image) => {
+      return (
+        image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000'
+      );
+    });
+    const trainingSet = await createAutotunerDataSet(
+      categories,
+      labledData,
+      numberOfClasses
+    );
+
+    var tensorflowlModelAutotuner = new autotuner.TensorflowlModelAutotuner(
+      ['accuracy'],
+      trainingSet,
+      numberOfClasses
+    );
+
+    const model = await createModel(numberOfClasses);
+
+    var optimizers = [
+      tensorflow.train.adadelta(learningRate),
+      tensorflow.train.adam(learningRate),
+      tensorflow.train.adamax(learningRate),
+      tensorflow.train.rmsprop(learningRate),
+      tensorflow.train.sgd(learningRate)
+    ];
+    var losses = [
+      LossFunction.absoluteDifference,
+      LossFunction.categoricalCrossentropy,
+      LossFunction.cosineDistance,
+      LossFunction.meanSquaredError,
+      LossFunction.sigmoidCrossEntropy,
+      LossFunction.softmaxCrossEntropy
+    ];
+
+    const parameters = {
+      lossfunction: losses,
+      optimizerAlgorithm: optimizers,
+      batchSize: [15],
+      epochs: [5, 10, 12, 15, 20]
+    };
+    tensorflowlModelAutotuner.addModel('testModel', model, parameters);
+
+    // tune the hyperparameters
+    await tensorflowlModelAutotuner.bayesianOptimization('accuracy');
+  };
+
   return (
     <Dialog
       className={className}
@@ -360,6 +426,16 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             timeout="auto"
             unmountOnExit
           >
+            <Tooltip title="Tune parameters" placement="bottom">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onParameterTuning}
+              >
+                Tune parameters
+              </Button>
+            </Tooltip>
+
             <Form
               batchSize={batchSize}
               closeDialog={closeDialog}

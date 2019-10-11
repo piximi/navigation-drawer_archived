@@ -33,6 +33,37 @@ export const createTrainingSet = async (
   return { data: concatenatedTensorData, lables: concatenatedLableData };
 };
 
+export const createAutotunerDataSet = async (
+  categories: Category[],
+  labledData: Image[],
+  numberOfClasses: number
+) => {
+  const trainingData: Image[] = [];
+  for (let i = 0; i < labledData.length; i++) {
+    if (labledData[i].partition === 0) {
+      trainingData.push(labledData[i]);
+    }
+  }
+
+  const trainDataSet = await createLabledTensorflowDataSet(
+    trainingData,
+    categories
+  );
+
+  var datapoints: {
+    data: tensorflow.Tensor<tensorflow.Rank>;
+    lables: number;
+  }[] = [];
+  for (let i = 0; i < trainDataSet.lables.length; i++) {
+    datapoints.push({
+      data: trainDataSet.data[i],
+      lables: trainDataSet.lables[i]
+    });
+  }
+
+  return datapoints;
+};
+
 export const createTestSet = async (
   categories: Category[],
   images: Image[]
