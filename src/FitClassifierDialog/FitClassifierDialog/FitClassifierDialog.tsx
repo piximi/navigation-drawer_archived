@@ -156,14 +156,18 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     []
   );
   const updateLossHistory = (x: number, y: number) => {
-    setTrainingLossHistory(trainingLossHistory.concat({ x, y }));
+    var history = trainingLossHistory;
+    history.push({ x, y });
+    setTrainingLossHistory(history);
   };
 
   const [trainingAccuracyHistory, setTrainingAccuracyHistory] = useState<
     LossHistory
   >([]);
   const updateAccuracHistory = (x: number, y: number) => {
-    setTrainingAccuracyHistory(trainingAccuracyHistory.concat({ x, y }));
+    var history = trainingAccuracyHistory;
+    history.push({ x, y });
+    setTrainingAccuracyHistory(history);
   };
 
   const [
@@ -171,9 +175,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setTrainingValidationAccuracyHistory
   ] = useState<LossHistory>([]);
   const updateValidationAccuracHistory = (x: number, y: number) => {
-    setTrainingValidationAccuracyHistory(
-      trainingValidationAccuracyHistory.concat({ x, y })
-    );
+    var history = trainingValidationAccuracyHistory;
+    history.push({ x, y });
+    setTrainingValidationAccuracyHistory(history);
   };
 
   const [
@@ -181,9 +185,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setTrainingValidationLossHistory
   ] = useState<LossHistory>([]);
   const updateValidationLossHistory = (x: number, y: number) => {
-    setTrainingValidationLossHistory(
-      trainingValidationLossHistory.concat({ x, y })
-    );
+    var history = trainingValidationLossHistory;
+    history.push({ x, y });
+    setTrainingValidationLossHistory(history);
   };
 
   const onBatchSizeChange = (event: React.FormEvent<EventTarget>) => {

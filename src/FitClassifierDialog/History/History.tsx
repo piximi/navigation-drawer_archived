@@ -25,7 +25,6 @@ export const History = (props: HistoryProps) => {
   } = props;
 
   const classes = useStyles();
-  debugger;
 
   return (
     <Grid container spacing={2}>

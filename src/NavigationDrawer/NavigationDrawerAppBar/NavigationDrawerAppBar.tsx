@@ -25,11 +25,7 @@ export const NavigationDrawerAppBar = (props: AppBarProps) => {
   const classes = useStyles({});
 
   return (
-    <AppBar
-      className={classNames(classes.appBar)}
-      color="default"
-      style={{ paddingTop: 60 }}
-    >
+    <AppBar className={classNames(classes.appBar)} color="default">
       <Toolbar disableGutters={true}>
         <Tooltip title={(toggled ? 'Hide ' : 'Show ') + 'sidebar'}>
           <IconButton
