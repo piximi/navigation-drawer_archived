@@ -13,7 +13,7 @@
     "@material-ui/core": "4.5.0",
     "@material-ui/icons": "4.2.1",
     "@material-ui/styles": "4.5.0",
-    "@piximi/autotuner": "^1.0.2",
+    "@piximi/autotuner": "^1.0.3",
     "@piximi/components": "^0.1.15",
     "@piximi/hooks": "^0.1.11",
     "@piximi/models": "^0.1.4",
@@ -148,5 +148,5 @@
   },
   "sideEffects": false,
   "types": "./dist/index.d.ts",
-  "version": "1.0.7"
+  "version": "1.0.8"
 }
