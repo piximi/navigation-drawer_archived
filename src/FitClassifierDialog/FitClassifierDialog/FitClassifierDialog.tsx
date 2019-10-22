@@ -364,6 +364,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       tensorflow.train.rmsprop(learningRate),
       tensorflow.train.sgd(learningRate)
     ];
+
     var losses = [
       LossFunction.absoluteDifference,
       LossFunction.categoricalCrossentropy,
@@ -382,7 +383,17 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     tensorflowlModelAutotuner.addModel('testModel', model, parameters);
 
     // tune the hyperparameters
-    await tensorflowlModelAutotuner.bayesianOptimization('accuracy');
+    const params = await tensorflowlModelAutotuner.bayesianOptimization(
+      'accuracy'
+    );
+
+    setBatchSize(params['batchSize']);
+    setEpochs(params['epochs']);
+    setLossFunction(LossFunction[params['lossFunction']] as string);
+    const optimizer = Object.keys(optimizationAlgorithms)[
+      params['optimizerFunction']
+    ];
+    setOptimizationAlgorithm(optimizer);
   };
 
   return (
