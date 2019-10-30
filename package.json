@@ -20,7 +20,6 @@
     "@piximi/store": "^0.1.23",
     "@tensorflow/tfjs": "^1.2.9",
     "@tensorflow/tfjs-vis": "^1.1.0",
-    "@types/mathjs": "^6.0.2",
     "axios": "^0.19.0",
     "classnames": "^2.2.6",
     "color": "^3.1.2",
