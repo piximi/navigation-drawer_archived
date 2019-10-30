@@ -333,7 +333,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     'logLoss',
     'meanSquaredError',
     'sigmoidCrossEntropy',
-    'softmaxCrossEntropy',
     'categoricalCrossentropy'
   }
   const onParameterTuning = async () => {
