@@ -16,7 +16,7 @@ export const evaluateTensorflowModelCV = async (
   numberOfClasses: number
 ) => {
   const dataSize = evaluationData.length;
-  const k = Math.min(10, math.ceil(math.nthRoot(dataSize) as number));
+  const k = Math.min(10, Math.ceil(Math.sqrt(dataSize) as number));
 
   const dataFolds = Array.from(
     Array(Math.ceil(evaluationData.length / k)),

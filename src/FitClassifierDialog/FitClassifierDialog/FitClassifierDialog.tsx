@@ -303,7 +303,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       const trainingSet = await createTrainingSet(categories, batchData, 2);
       const trainData = trainingSet.data;
       const trainLables = trainingSet.lables;
-      const history = await model.fit(trainData, trainLables, args);
+      await model.fit(trainData, trainLables, args);
       trainData.dispose();
       trainLables.dispose();
       i++;
@@ -342,11 +342,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
         image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000'
       );
     });
-    const trainingSet = await createAutotunerDataSet(
-      categories,
-      labledData,
-      numberOfClasses
-    );
+    const trainingSet = await createAutotunerDataSet(categories, labledData);
 
     var tensorflowlModelAutotuner = new autotuner.TensorflowlModelAutotuner(
       ['accuracy'],
@@ -370,7 +366,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       LossFunction.cosineDistance,
       LossFunction.meanSquaredError,
       LossFunction.sigmoidCrossEntropy,
-      LossFunction.softmaxCrossEntropy
+      LossFunction.categoricalCrossentropy
     ];
 
     const parameters = {
