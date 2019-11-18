@@ -38,6 +38,7 @@ import {
 } from './dataset';
 import { createModel, createMobileNet } from './networks';
 import * as autotuner from '@piximi/autotuner';
+import TextField from '@material-ui/core/TextField';
 
 const optimizationAlgorithms: { [identifier: string]: any } = {
   adadelta: tensorflow.train.adadelta,
@@ -553,12 +554,30 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             timeout="auto"
             unmountOnExit
           >
+            <Tooltip title="Initialize dataset" placement="bottom">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={initializeDatasets}
+              >
+                Augment Data
+              </Button>
+            </Tooltip>
             <FormGroup row>
               <FormControlLabel
                 control={<Checkbox value="randomDataAugmentation" />}
                 label="Random Data Augmentation"
               ></FormControlLabel>
             </FormGroup>
+            <Tooltip title="Initialize dataset" placement="bottom">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={initializeDatasets}
+              >
+                Rescale Pixel Intensity Distribution
+              </Button>
+            </Tooltip>
           </Collapse>
         </List>
         <DialogContentText>Training history:</DialogContentText>
