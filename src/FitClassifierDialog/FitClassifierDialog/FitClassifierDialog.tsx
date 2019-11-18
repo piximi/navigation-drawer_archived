@@ -247,6 +247,10 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setOptimizationAlgorithm(target.value);
   };
 
+  const onDataAugmentationChange = () => {
+    setDataAugmentation(!dataAugmentation);
+  };
+
   const className = classNames(styles.content, styles.contentLeft, {
     [styles.contentShift]: openedDrawer,
     [styles.contentShiftLeft]: openedDrawer
