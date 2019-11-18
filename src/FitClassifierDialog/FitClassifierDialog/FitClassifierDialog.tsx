@@ -8,7 +8,11 @@ import {
   ListItem,
   ListItemIcon,
   Collapse,
-  ListItemText
+  ListItemText,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormGroup
 } from '@material-ui/core';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
@@ -442,7 +446,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
                 color="primary"
                 onClick={onParameterTuning}
               >
-                Tune parameters
+                Tune parameters NEW 1
               </Button>
             </Tooltip>
 
@@ -462,6 +466,13 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               openedDialog={openedDialog}
               optimizationAlgorithm={optimizationAlgorithm}
             />
+
+            <FormGroup row>
+              <FormControlLabel
+                control={<Checkbox value="randomDataAugmentation" />}
+                label="Random Data Augmentation"
+              ></FormControlLabel>
+            </FormGroup>
           </Collapse>
 
           <ListItem
