@@ -150,6 +150,13 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setCollapsedDatasetSettingsList(!collapsedDatasetSettingsList);
   };
 
+  const [collapsedPreprocessingList, setCollapsedPreprocessingList] = useState<
+    boolean
+  >(false);
+  const onPreprocessingListClick = () => {
+    setCollapsedPreprocessingList(!collapsedPreprocessingList);
+  };
+
   const [stopTraining, setStopTraining] = useState<boolean>(false);
   const [batchSize, setBatchSize] = useState<number>(32);
   const [epochs, setEpochs] = useState<number>(10);
@@ -501,6 +508,51 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               primary="Dataset Settings"
               style={{ fontSize: '1em' }}
             />
+          </ListItem>
+
+          <Collapse
+            in={collapsedDatasetSettingsList}
+            timeout="auto"
+            unmountOnExit
+          >
+            <Tooltip title="Initialize dataset" placement="bottom">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={initializeDatasets}
+              >
+                Initialize Dataset
+              </Button>
+            </Tooltip>
+
+            <div style={{ padding: '12px 0px', width: '300' }}>
+              <Typography id="range-slider" gutterBottom>
+                Dataset Splits
+              </Typography>
+              <Slider
+                value={datasetSplits}
+                onChange={handleChange}
+                valueLabelDisplay="auto"
+                aria-labelledby="range-slider"
+                getAriaValueText={valuetext}
+              />
+            </div>
+          </Collapse>
+
+          <ListItem
+            button
+            onClick={onPreprocessingListClick}
+            style={{ padding: '12px 0px' }}
+          >
+            <ListItemIcon>
+              {collapsedDatasetSettingsList ? (
+                <ExpandLessIcon />
+              ) : (
+                <ExpandMoreIcon />
+              )}
+            </ListItemIcon>
+
+            <ListItemText primary="Preprocessing" style={{ fontSize: '1em' }} />
           </ListItem>
 
           <Collapse
