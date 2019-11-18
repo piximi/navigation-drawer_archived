@@ -200,6 +200,10 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     trainingValidationLossHistory,
     setTrainingValidationLossHistory
   ] = useState<LossHistory>([]);
+
+  const [lowerPercentile, setLowerPercentile] = useState<number>(0);
+  const [upperPercentile, setUpperPercentile] = useState<number>(1);
+
   const updateValidationLossHistory = (x: number, y: number) => {
     var history = trainingValidationLossHistory;
     history.push({ x, y });
@@ -257,6 +261,20 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
   const onDataAugmentationChange = () => {
     setDataAugmentation(!dataAugmentation);
+  };
+
+  const onUpperPercentileChange = (event: React.FormEvent<EventTarget>) => {
+    const target = event.target as HTMLInputElement;
+    var value = Number(target.value);
+
+    setUpperPercentile(value);
+  };
+
+  const onLowerPercentileChange = (event: React.FormEvent<EventTarget>) => {
+    const target = event.target as HTMLInputElement;
+    var value = Number(target.value);
+
+    setLowerPercentile(value);
   };
 
   const className = classNames(styles.content, styles.contentLeft, {
@@ -578,16 +596,14 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
                 Rescale Pixel Intensity Distribution
               </Button>
             </Tooltip>
+            <RescalingForm>
+              onLowerPercentileChange={onLowerPercentileChange}
+              onUpperPercentileChange={onUpperPercentileChange}
+              lowerPercentile={lowerPercentile}
+              upperPercentile={upperPercentile}
+            </RescalingForm>
           </Collapse>
         </List>
-        <DialogContentText>Training history:</DialogContentText>
-
-        <History
-          lossData={trainingLossHistory}
-          validationAccuracyData={trainingValidationLossHistory}
-          accuracyData={trainingAccuracyHistory}
-          validationLossData={trainingValidationAccuracyHistory}
-        />
       </DialogContent>
     </Dialog>
   );
