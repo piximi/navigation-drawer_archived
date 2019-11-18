@@ -482,13 +482,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               openedDialog={openedDialog}
               optimizationAlgorithm={optimizationAlgorithm}
             />
-
-            <FormGroup row>
-              <FormControlLabel
-                control={<Checkbox value="randomDataAugmentation" />}
-                label="Random Data Augmentation"
-              ></FormControlLabel>
-            </FormGroup>
           </Collapse>
 
           <ListItem
@@ -545,7 +538,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             style={{ padding: '12px 0px' }}
           >
             <ListItemIcon>
-              {collapsedDatasetSettingsList ? (
+              {collapsedPreprocessingList ? (
                 <ExpandLessIcon />
               ) : (
                 <ExpandMoreIcon />
@@ -556,32 +549,16 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
           </ListItem>
 
           <Collapse
-            in={collapsedDatasetSettingsList}
+            in={collapsedPreprocessingList}
             timeout="auto"
             unmountOnExit
           >
-            <Tooltip title="Initialize dataset" placement="bottom">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={initializeDatasets}
-              >
-                Initialize Dataset
-              </Button>
-            </Tooltip>
-
-            <div style={{ padding: '12px 0px', width: '300' }}>
-              <Typography id="range-slider" gutterBottom>
-                Dataset Splits
-              </Typography>
-              <Slider
-                value={datasetSplits}
-                onChange={handleChange}
-                valueLabelDisplay="auto"
-                aria-labelledby="range-slider"
-                getAriaValueText={valuetext}
-              />
-            </div>
+            <FormGroup row>
+              <FormControlLabel
+                control={<Checkbox value="randomDataAugmentation" />}
+                label="Random Data Augmentation"
+              ></FormControlLabel>
+            </FormGroup>
           </Collapse>
         </List>
         <DialogContentText>Training history:</DialogContentText>
