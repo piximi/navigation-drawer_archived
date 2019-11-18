@@ -121,6 +121,10 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setDatasetInitialized(true);
   };
 
+  const [dataAugmentation, setDataAugmentation] = React.useState<boolean>([
+    false
+  ]);
+
   const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);
   const handleChange = (event: any, newValue: any) => {
     setDatasetSplits(newValue);
@@ -463,6 +467,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               onLearningRateChange={onLearningRateChange}
               onLossFunctionChange={onLossFunctionChange}
               onOptimizationAlgorithmChange={onOptimizationAlgorithmChange}
+              onDataAugmentationChange={onDataAugmentationChange}
               openedDialog={openedDialog}
               optimizationAlgorithm={optimizationAlgorithm}
             />
