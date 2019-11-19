@@ -28,7 +28,7 @@ import classNames from 'classnames';
 import { makeStyles } from '@material-ui/styles';
 import { Category, Image } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { styles } from './FitClassifierDialog.css';
 import { useCollapseList } from '@piximi/hooks';
 import {
@@ -40,6 +40,7 @@ import {
 import { createModel, createMobileNet } from './networks';
 import * as autotuner from '@piximi/autotuner';
 import TextField from '@material-ui/core/TextField';
+import * as ImageJS from 'image-js';
 
 const optimizationAlgorithms: { [identifier: string]: any } = {
   adadelta: tensorflow.train.adadelta,
@@ -108,6 +109,30 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   } = props;
 
   const styles = useStyles({});
+
+  const [src, setSrc] = useState(images[0].data);
+
+  const [example, setExample] = useState<ImageJS.Image>(new ImageJS.Image());
+
+  const openImage = async () => {
+    console.log(src);
+
+    const image = await ImageJS.Image.load(src);
+
+    setExample(image);
+  };
+
+  useEffect(() => {
+    console.log('foo');
+
+    openImage();
+
+    console.log(example.getHistograms());
+  });
+
+  // const example = ImageJS.Image.load(images[0]);
+
+  // example.data
 
   // assign each image to train- test- or validation- set
   const initializeDatasets = () => {
@@ -287,6 +312,67 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     paper: styles.paper
   };
 
+  // TEMPORARY: load images locally for debugging
+
+  // let src: string = 'https://picsum.photos/256/256';
+  // const [channels, setChannels] = useState({ r: true, g: true, b: true });
+  // const [intensityRange, setIntensityRange] = useState([0.0, 1.0]);
+
+  // const [image, setImage] = useState<Image>(new Image());
+
+  // const openImage = async () => {
+  // const image = await JsImage.Image.load(src);
+
+  // const [minimum, maximum] = intensityRange;
+
+  // const rescaled = image.multiply(maximum - minimum);
+
+  // setImage(rescaled);
+
+  // setImage(rescaled);
+  // };
+
+  // // calculate and add up histograms of every image in data set
+
+  // const computeHistogram = async (labledData: Image[]) => {
+
+  //   var computing = true;
+  //   var i = 0;
+  //   var batchSize = 1;
+  //   let histogramInputImage: HTMLImageElement | HTMLCanvasElement ;
+  //   let histogramChannel1 : number[] = [];
+  //   let histogramChannel2 : number[] = [];
+  //   let histogramChannel3 : number[] = [];
+  //   while (computing) {
+  //     var startBatchIndex = i * batchSize;
+  //     var endBatchIndex = (i + 1) * batchSize - 1;
+  //     if (endBatchIndex > labledData.length) {
+  //       var batchData = labledData.slice(startBatchIndex);
+  //       computing = false;
+  //     } else {
+  //       var batchData = labledData.slice(startBatchIndex, endBatchIndex);
+  //     }
+  //     console.log(batchData);
+  //     const tmp = await ImageJS.Image.load(batchData[0].data);
+  //     histogramInputImage = tmp.getCanvas();
+
+  //     histogramChannel1 += histogramInputImage.getHistogram({
+  //       channel: 1
+  //     });
+  //     histogramChannel2 += histogramInputImage.getHistogram({
+  //       channel: 2
+  //     });
+  //     histogramChannel3 += histogramInputImage.getHistogram({
+  //       channel: 3
+  //     });
+  //     // const HistogramData = batchData.data;
+  //     i++;
+  //   }
+
+  //   console.log('finished');
+
+  // };
+
   const fit = async (labledData: Image[]) => {
     const numberOfClasses: number = categories.length - 1;
     if (numberOfClasses === 1) {
@@ -327,7 +413,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       }
     };
 
-    // train network in batches, reduce memory usage
+    // get histogram of entire data set
+    // the perform intensity rescaling
     var training = true;
     var i = 0;
     while (training) {

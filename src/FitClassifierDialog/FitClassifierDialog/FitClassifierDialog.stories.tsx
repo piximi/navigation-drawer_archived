@@ -4,6 +4,7 @@ import { FitClassifierDialog } from './FitClassifierDialog';
 import { ThemeProvider } from '@material-ui/styles';
 import { createMuiTheme } from '@material-ui/core';
 import { Category, Image, Partition } from '@piximi/types';
+import foo from './foo.png';
 
 const closeDialog = () => {};
 
