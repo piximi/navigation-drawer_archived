@@ -22,6 +22,7 @@ import * as React from 'react';
 import { DialogAppBar } from '../DialogAppBar';
 import { DialogTransition } from '../DialogTransition';
 import { Form } from '../Form/Form';
+import { RescalingForm } from '../RescalingForm/RescalingForm';
 import { History } from '../History';
 import classNames from 'classnames';
 import { makeStyles } from '@material-ui/styles';
@@ -122,9 +123,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setDatasetInitialized(true);
   };
 
-  const [dataAugmentation, setDataAugmentation] = React.useState<boolean>([
+  const [dataAugmentation, setDataAugmentation] = React.useState<boolean>(
     false
-  ]);
+  );
 
   const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);
   const handleChange = (event: any, newValue: any) => {
@@ -497,7 +498,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               onLearningRateChange={onLearningRateChange}
               onLossFunctionChange={onLossFunctionChange}
               onOptimizationAlgorithmChange={onOptimizationAlgorithmChange}
-              onDataAugmentationChange={onDataAugmentationChange}
+              // onDataAugmentationChange={onDataAugmentationChange}
               openedDialog={openedDialog}
               optimizationAlgorithm={optimizationAlgorithm}
             />
