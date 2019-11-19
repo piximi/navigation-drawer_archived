@@ -597,12 +597,14 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
                 Rescale Pixel Intensity Distribution
               </Button>
             </Tooltip>
-            <RescalingForm>
+            <RescalingForm
               onLowerPercentileChange={onLowerPercentileChange}
               onUpperPercentileChange={onUpperPercentileChange}
               lowerPercentile={lowerPercentile}
               upperPercentile={upperPercentile}
-            </RescalingForm>
+              closeDialog={closeDialog}
+              openedDialog={openedDialog}
+            />
           </Collapse>
         </List>
       </DialogContent>

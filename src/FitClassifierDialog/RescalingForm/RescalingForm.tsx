@@ -94,6 +94,7 @@ export const RescalingForm = (props: FormProps) => {
             onChange={onLowerPercentileChange}
             type="number"
             margin="normal"
+            defaultValue="0"
           />
         </Grid>
 
@@ -106,6 +107,7 @@ export const RescalingForm = (props: FormProps) => {
             onChange={onUpperPercentileChange}
             margin="normal"
             type="number"
+            defaultValue="100"
           />
         </Grid>
       </Grid>
