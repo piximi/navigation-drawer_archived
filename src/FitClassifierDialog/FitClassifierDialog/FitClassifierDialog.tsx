@@ -127,8 +127,11 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     console.log('foo');
 
     openImage();
-
+    //@ts-ignore
     console.log(example.getHistograms());
+
+    if (typeof example != 'undefined') {
+    }
   });
 
   // const example = ImageJS.Image.load(images[0]);
@@ -190,7 +193,11 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setCollapsedPreprocessingList(!collapsedPreprocessingList);
   };
 
-  const onPreprocessingClick = async () => {
+  const onPreprocessingClick = async (
+    lowerPercentile: number,
+    upperPercentile: number,
+    labledData: Image[]
+  ) => {
     //does actual preprocessing upon clicking button
     // Skeleton
     const rescaledSet = await rescaleData(
@@ -201,9 +208,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     const resizedSet = await resizeData(
       paddingOption1,
       paddingOption2,
-      rescaledSet
+      labledData
     );
-    const augmentedSet = await augmentData(dataAugmentation, resizedSet);
+    const augmentedSet = await augmentData(dataAugmentation, labledData);
   };
 
   const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);

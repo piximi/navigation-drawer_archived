@@ -1,16 +1,18 @@
 // To Do : put all preprocessing functions here
-
+import { Image } from '@piximi/types';
 // rescaleData(lowerPercentile, upperPercentile, inputData);
 // will be called with inputData = labledData
 // returns rescaledSet
 
 export const rescaleData = async (
-  lowerPercentile: number[],
-  upperPercentile: number[],
+  lowerPercentile: number,
+  upperPercentile: number,
   labledData: Image[]
 ) => {
   // do something
   // old :const testDataSet = await createLabledTensorflowDataSet(testData, categories);
+
+  let rescaledSet: Image[] = [];
 
   return { rescaledSet };
 };
@@ -21,6 +23,7 @@ export const resizeData = async (
   labledData: Image[]
 ) => {
   // do something
+  let resizedSet: Image[] = [];
 
   return { resizedSet };
 };
@@ -31,6 +34,6 @@ export const augmentData = async (
 ) => {
   // do something
   // old :const testDataSet = await createLabledTensorflowDataSet(testData, categories);
-
+  let augmentedSet: Image[] = [];
   return { augmentedSet };
 };

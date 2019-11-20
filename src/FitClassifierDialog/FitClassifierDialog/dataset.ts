@@ -167,12 +167,47 @@ const findCategoryIndex = (
   );
 };
 
+export const imageRotateFlip = (
+  image: HTMLImageElement | HTMLCanvasElement
+): tensorflow.Tensor => {
+  const tf = require('@tensorflow/tfjs');
+  const ia = require('image-augment')(tf);
+  let degree: number = 0;
+  let random = Math.random();
+  let tensor_image: tensorflow.Tensor;
+
+  // hard code
+
+  if (random < 0.25) {
+    degree = 0;
+  } else if (random < 0.5) {
+    degree = 90;
+  } else if (random < 0.75) {
+    degree = 180;
+  } else {
+    degree = 270;
+  }
+  const basicAugmentation = ia.sequential([
+    ia.fliplr(0.5),
+    ia.flipud(0.5),
+    ia.affine({ rotate: degree })
+  ]);
+
+  tensor_image = tensorflow.browser.fromPixels(image);
+  tensor_image = basicAugmentation.read({ tensor_image });
+
+  return tensor_image;
+};
+
 export const tensorImageData = async (image: Image) => {
   const data = await ImageJS.Image.load(image.data);
 
   return tensorflow.tidy(() => {
-    return tensorflow.browser
-      .fromPixels(imageToSquare(data.getCanvas(), 224))
+    let temp_image: HTMLImageElement | HTMLCanvasElement;
+    let tensor_image: tensorflow.Tensor;
+    temp_image = imageToSquare(data.getCanvas(), 224);
+    tensor_image = imageRotateFlip(temp_image);
+    return tensor_image
       .toFloat()
       .sub(tensorflow.scalar(127.5))
       .div(tensorflow.scalar(127.5))
