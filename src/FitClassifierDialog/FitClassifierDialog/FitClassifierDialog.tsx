@@ -149,11 +149,61 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setDatasetInitialized(true);
   };
 
+  // Preprocessing clicks
+
+  const [paddingOption1, setPaddingOption1] = React.useState<boolean>(false);
+  const onPaddingOption1Click = () => {
+    setPaddingOption1(!paddingOption1);
+  };
+
+  const [paddingOption2, setPaddingOption2] = React.useState<boolean>(false);
+  const onpaddingOption2Click = () => {
+    setPaddingOption2(!paddingOption2);
+  };
+
   const [dataAugmentation, setDataAugmentation] = React.useState<boolean>(
     false
   );
   const onDataAugmentationClick = () => {
     setDataAugmentation(!dataAugmentation);
+  };
+
+  const [lowerPercentile, setLowerPercentile] = React.useState<number>(0);
+  const onLowerPercentileChange = (event: React.FormEvent<EventTarget>) => {
+    const target = event.target as HTMLInputElement;
+    var value = Number(target.value);
+    setLowerPercentile(value);
+  };
+
+  const [upperPercentile, setUpperPercentile] = React.useState<number>(1);
+  const onUpperPercentileChange = (event: React.FormEvent<EventTarget>) => {
+    const target = event.target as HTMLInputElement;
+    var value = Number(target.value);
+    setUpperPercentile(value);
+  };
+
+  const [collapsedPreprocessingList, setCollapsedPreprocessingList] = useState<
+    boolean
+  >(false);
+  const onPreprocessingListClick = () => {
+    // shows or hides preprocessing list in interface
+    setCollapsedPreprocessingList(!collapsedPreprocessingList);
+  };
+
+  const onPreprocessingClick = async () => {
+    //does actual preprocessing upon clicking button
+    // Skeleton
+    const rescaledSet = await rescaleData(
+      lowerPercentile,
+      upperPercentile,
+      labledData
+    );
+    const resizedSet = await resizeData(
+      paddingOption1,
+      paddingOption2,
+      rescaledSet
+    );
+    const augmentedSet = await augmentData(dataAugmentation, resizedSet);
   };
 
   const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);
@@ -183,13 +233,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
   const onDatasetSettingsListClick = () => {
     setCollapsedDatasetSettingsList(!collapsedDatasetSettingsList);
-  };
-
-  const [collapsedPreprocessingList, setCollapsedPreprocessingList] = useState<
-    boolean
-  >(false);
-  const onPreprocessingListClick = () => {
-    setCollapsedPreprocessingList(!collapsedPreprocessingList);
   };
 
   const [stopTraining, setStopTraining] = useState<boolean>(false);
@@ -234,12 +277,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     trainingValidationLossHistory,
     setTrainingValidationLossHistory
   ] = useState<LossHistory>([]);
-
-  const [lowerPercentile, setLowerPercentile] = useState<number>(0);
-  const [upperPercentile, setUpperPercentile] = useState<number>(1);
-
-  const [paddingOption1, setpaddingOption1] = useState<boolean>(0);
-  const [paddingOption2, setpaddingOption2] = useState<boolean>(0);
 
   const updateValidationLossHistory = (x: number, y: number) => {
     var history = trainingValidationLossHistory;
@@ -294,24 +331,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     const target = event.target as HTMLInputElement;
 
     setOptimizationAlgorithm(target.value);
-  };
-
-  const onDataAugmentationChange = () => {
-    setDataAugmentation(!dataAugmentation);
-  };
-
-  const onUpperPercentileChange = (event: React.FormEvent<EventTarget>) => {
-    const target = event.target as HTMLInputElement;
-    var value = Number(target.value);
-
-    setUpperPercentile(value);
-  };
-
-  const onLowerPercentileChange = (event: React.FormEvent<EventTarget>) => {
-    const target = event.target as HTMLInputElement;
-    var value = Number(target.value);
-
-    setLowerPercentile(value);
   };
 
   const className = classNames(styles.content, styles.contentLeft, {
@@ -529,23 +548,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setOptimizationAlgorithm(optimizer);
   };
 
-  const onPreprocessing = async () => {
-    // To Do : declare or initialize variables
-    // e.g. const numberOfClasses: number = categories.length - 1;
-    // To Do : create preprocessing functions
-    const rescaledSet = await rescaleData(
-      lowerPercentile,
-      upperPercentile,
-      labledData
-    );
-    const resizedSet = await resizeData(
-      paddingOption1,
-      paddingOption2,
-      rescaledSet
-    );
-    const augmentedSet = await augmentData(dataAugmentation, rescaledSet);
-  };
-
+  // specifies interface
   return (
     <Dialog
       className={className}
@@ -580,10 +583,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               )}
             </ListItemIcon>
 
-            <ListItemText
-              primary="List Preprocessing"
-              style={{ fontSize: '1em' }}
-            />
+            <ListItemText primary="Preprocessing" style={{ fontSize: '1em' }} />
           </ListItem>
 
           <Collapse
@@ -591,15 +591,18 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             timeout="auto"
             unmountOnExit
           >
-            <Tooltip title="Apply Preprocessing" placement="bottom">
+            <Tooltip title="Apply Preprocessing Settings" placement="bottom">
               <Button
                 variant="contained"
                 color="primary"
-                onClick={onPreprocessing} // replace with onAugmentation (WIP)
+                onClick={onPreprocessingClick}
               >
                 Apply Preprocessing
               </Button>
             </Tooltip>
+            <Typography id="rescaling" gutterBottom>
+              Pixel Intensity Rescaling
+            </Typography>
             <RescalingForm
               onLowerPercentileChange={onLowerPercentileChange}
               onUpperPercentileChange={onUpperPercentileChange}
@@ -608,10 +611,28 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               closeDialog={closeDialog}
               openedDialog={openedDialog}
             />
+            <Typography id="augmentation" gutterBottom>
+              Data Augmentation
+            </Typography>
             <FormGroup row>
               <FormControlLabel
                 control={<Checkbox value="randomDataAugmentation" />}
                 label="Random Data Augmentation"
+              ></FormControlLabel>
+            </FormGroup>
+            <Typography id="resizing" gutterBottom>
+              Resizing
+            </Typography>
+            <FormGroup row>
+              <FormControlLabel
+                control={<Checkbox value="paddingOption1" />}
+                label="Padding Option 1"
+              ></FormControlLabel>
+            </FormGroup>
+            <FormGroup row>
+              <FormControlLabel
+                control={<Checkbox value="paddingOption2" />}
+                label="Padding Option 2"
               ></FormControlLabel>
             </FormGroup>
           </Collapse>
