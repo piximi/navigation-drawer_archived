@@ -13,7 +13,7 @@ const theme = createMuiTheme({
   }
 });
 
-import * as testFile from 'C:\\Users\\m_lev\\Downloads\\mnist.json';
+let testFile;
 
 storiesOf('FitClassifierDialog', module).add('large MNIST', () => (
   <ThemeProvider theme={theme}>
