@@ -37,6 +37,7 @@ import {
   setTestsetRatio,
   createAutotunerDataSet
 } from './dataset';
+import { rescaleData, resizeData, augmentData } from './preprocessing';
 import { createModel, createMobileNet } from './networks';
 import * as autotuner from '@piximi/autotuner';
 import TextField from '@material-ui/core/TextField';
@@ -236,6 +237,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
   const [lowerPercentile, setLowerPercentile] = useState<number>(0);
   const [upperPercentile, setUpperPercentile] = useState<number>(1);
+
+  const [paddingOption1, setpaddingOption1] = useState<boolean>(0);
+  const [paddingOption2, setpaddingOption2] = useState<boolean>(0);
 
   const updateValidationLossHistory = (x: number, y: number) => {
     var history = trainingValidationLossHistory;
@@ -475,6 +479,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
         image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000'
       );
     });
+
     const trainingSet = await createAutotunerDataSet(categories, labledData);
 
     var tensorflowlModelAutotuner = new autotuner.TensorflowlModelAutotuner(
@@ -524,6 +529,23 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setOptimizationAlgorithm(optimizer);
   };
 
+  const onPreprocessing = async () => {
+    // To Do : declare or initialize variables
+    // e.g. const numberOfClasses: number = categories.length - 1;
+    // To Do : create preprocessing functions
+    const rescaledSet = await rescaleData(
+      lowerPercentile,
+      upperPercentile,
+      labledData
+    );
+    const resizedSet = await resizeData(
+      paddingOption1,
+      paddingOption2,
+      rescaledSet
+    );
+    const augmentedSet = await augmentData(dataAugmentation, rescaledSet);
+  };
+
   return (
     <Dialog
       className={className}
@@ -558,7 +580,10 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               )}
             </ListItemIcon>
 
-            <ListItemText primary="Preprocessing" style={{ fontSize: '1em' }} />
+            <ListItemText
+              primary="List Preprocessing"
+              style={{ fontSize: '1em' }}
+            />
           </ListItem>
 
           <Collapse
@@ -566,28 +591,13 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             timeout="auto"
             unmountOnExit
           >
-            <Tooltip title="Augment Dataset" placement="bottom">
+            <Tooltip title="Apply Preprocessing" placement="bottom">
               <Button
                 variant="contained"
                 color="primary"
-                onClick={onParameterTuning} // replace with onAugmentation (WIP)
+                onClick={onPreprocessing} // replace with onAugmentation (WIP)
               >
-                Augment Data
-              </Button>
-            </Tooltip>
-            <FormGroup row>
-              <FormControlLabel
-                control={<Checkbox value="randomDataAugmentation" />}
-                label="Random Data Augmentation"
-              ></FormControlLabel>
-            </FormGroup>
-            <Tooltip title="Rescaling" placement="bottom">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={onParameterTuning} // replace with onRescaling (WIP)
-              >
-                Rescale Pixel Intensity Distribution
+                Apply Preprocessing
               </Button>
             </Tooltip>
             <RescalingForm
@@ -598,6 +608,12 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               closeDialog={closeDialog}
               openedDialog={openedDialog}
             />
+            <FormGroup row>
+              <FormControlLabel
+                control={<Checkbox value="randomDataAugmentation" />}
+                label="Random Data Augmentation"
+              ></FormControlLabel>
+            </FormGroup>
           </Collapse>
 
           <ListItem
