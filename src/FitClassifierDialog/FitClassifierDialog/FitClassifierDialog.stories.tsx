@@ -13,14 +13,14 @@ const theme = createMuiTheme({
   }
 });
 
-let testFile;
+let testFile = [];
 
 storiesOf('FitClassifierDialog', module).add('large MNIST', () => (
   <ThemeProvider theme={theme}>
     <FitClassifierDialog
-      categories={testFile.default.categories}
+      categories={testFile}
       closeDialog={closeDialog}
-      images={testFile.default.images}
+      images={testFile}
       openedDialog
       openedDrawer={false}
       setImagesPartition={() => {}}

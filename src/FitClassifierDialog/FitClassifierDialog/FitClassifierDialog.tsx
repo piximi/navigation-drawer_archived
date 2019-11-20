@@ -21,7 +21,7 @@ import { Form } from '../Form/Form';
 import { History } from '../History';
 import classNames from 'classnames';
 import { makeStyles } from '@material-ui/styles';
-import { Category, Image } from '@piximi/types';
+import { Category } from '@piximi/types';
 import * as tensorflow from '@tensorflow/tfjs';
 import { useState } from 'react';
 import { styles } from './FitClassifierDialog.css';
