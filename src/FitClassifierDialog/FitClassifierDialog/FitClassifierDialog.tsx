@@ -41,13 +41,16 @@ import { assertTypesMatch } from '@tensorflow/tfjs-core/dist/tensor_util';
 import * as tm from '@teachablemachine/image';
 
 const SEED_WORD = 'testSuite';
-// const seed: seedrandom.prng = seedrandom(SEED_WORD);
+const seed: seedrandom.prng = seedrandom(SEED_WORD);
 
 // @ts-ignore
 var Table = require('cli-table');
 
 const BEAN_DATASET_URL =
   'https://storage.googleapis.com/teachable-machine-models/test_data/image/beans/';
+
+const FLOWER_DATASET_URL =
+  'https://storage.googleapis.com/teachable-machine-models/test_data/image/flowers_all/';
 
 function loadPngImage(
   c: string,
@@ -58,6 +61,25 @@ function loadPngImage(
   const src = dataset_url + `${c}/${i}.png`;
 
   // console.log(src)
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.crossOrigin = 'anonymous';
+    img.src = src;
+  });
+}
+
+/**
+ * Load a flower image from our storage bucket
+ */
+function loadJpgImage(
+  c: string,
+  i: number,
+  dataset_url: string
+): Promise<HTMLImageElement> {
+  // tslint:disable-next-line:max-line-length
+  const src = dataset_url + `${c}/${i}.jpg`;
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
@@ -80,7 +102,7 @@ async function createDatasets(
   // fill in an array with unique numbers
   let listNumbers = [];
   for (let i = 0; i < trainSize + testSize; ++i) listNumbers[i] = i;
-  listNumbers = fisherYates(listNumbers); // shuffle
+  listNumbers = fisherYates(listNumbers, seed); // shuffle
 
   const trainAndValidationIndeces = listNumbers.slice(0, trainSize);
   const testIndices = listNumbers.slice(trainSize, trainSize + testSize);
@@ -330,26 +352,6 @@ const lossFunctions: { [identifier: string]: any } = {
   meanSquaredError: tensorflow.losses.meanSquaredError,
   sigmoidCrossEntropy: tensorflow.losses.sigmoidCrossEntropy,
   categoricalCrossentropy: tensorflow.losses.softmaxCrossEntropy
-};
-
-// Fisher-Yates Shuffle,
-const shuffleImages = (array: Image[]) => {
-  let counter = array.length;
-
-  // While there are elements in the array
-  while (counter > 0) {
-    // Pick a random index
-    let index = Math.floor(Math.random() * counter);
-
-    // Decrease counter by 1
-    counter--;
-
-    // And swap the last element with it
-    let temp = array[counter];
-    array[counter] = array[index];
-    array[index] = temp;
-  }
-  return array;
 };
 
 const useStyles = makeStyles(styles);
@@ -619,15 +621,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const onFit = async () => {
-    // const labledData = images.filter((image: Image) => {
-    //   return (
-    //     image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000'
-    //   );
-    // });
-    // initializeDatasets();
-    // resetStopTraining();
-    // fit(shuffleImages(labledData)).then(() => {});
-    testMobilenet(BEAN_DATASET_URL, 2, loadPngImage);
+    // testMobilenet(BEAN_DATASET_URL, 2, loadPngImage);
+    testMobilenet(FLOWER_DATASET_URL, 1, loadJpgImage);
   };
 
   enum LossFunction {
