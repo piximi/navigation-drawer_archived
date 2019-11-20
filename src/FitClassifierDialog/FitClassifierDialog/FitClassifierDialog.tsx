@@ -151,8 +151,12 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   const [dataAugmentation, setDataAugmentation] = React.useState<boolean>(
     false
   );
+  const onDataAugmentationClick = () => {
+    setDataAugmentation(!dataAugmentation);
+  };
 
   const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);
+
   const handleChange = (event: any, newValue: any) => {
     setDatasetSplits(newValue);
     setTestsetRatio(datasetSplits[1] - datasetSplits[0]);
@@ -166,13 +170,16 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     collapsedClasssifierSettingsList,
     setCollapsedClasssifierSettingsList
   ] = useState<boolean>(false);
+
   const onClasssifierSettingsListClick = () => {
     setCollapsedClasssifierSettingsList(!collapsedClasssifierSettingsList);
   };
+
   const [
     collapsedDatasetSettingsList,
     setCollapsedDatasetSettingsList
   ] = useState<boolean>(false);
+
   const onDatasetSettingsListClick = () => {
     setCollapsedDatasetSettingsList(!collapsedDatasetSettingsList);
   };
@@ -540,6 +547,61 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
         <List dense>
           <ListItem
             button
+            onClick={onPreprocessingListClick}
+            style={{ padding: '12px 0px' }}
+          >
+            <ListItemIcon>
+              {collapsedPreprocessingList ? (
+                <ExpandLessIcon />
+              ) : (
+                <ExpandMoreIcon />
+              )}
+            </ListItemIcon>
+
+            <ListItemText primary="Preprocessing" style={{ fontSize: '1em' }} />
+          </ListItem>
+
+          <Collapse
+            in={collapsedPreprocessingList}
+            timeout="auto"
+            unmountOnExit
+          >
+            <Tooltip title="Augment Dataset" placement="bottom">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onParameterTuning} // replace with onAugmentation (WIP)
+              >
+                Augment Data
+              </Button>
+            </Tooltip>
+            <FormGroup row>
+              <FormControlLabel
+                control={<Checkbox value="randomDataAugmentation" />}
+                label="Random Data Augmentation"
+              ></FormControlLabel>
+            </FormGroup>
+            <Tooltip title="Rescaling" placement="bottom">
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={onParameterTuning} // replace with onRescaling (WIP)
+              >
+                Rescale Pixel Intensity Distribution
+              </Button>
+            </Tooltip>
+            <RescalingForm
+              onLowerPercentileChange={onLowerPercentileChange}
+              onUpperPercentileChange={onUpperPercentileChange}
+              lowerPercentile={lowerPercentile}
+              upperPercentile={upperPercentile}
+              closeDialog={closeDialog}
+              openedDialog={openedDialog}
+            />
+          </Collapse>
+
+          <ListItem
+            button
             onClick={onClasssifierSettingsListClick}
             style={{ padding: '12px 0px' }}
           >
@@ -637,61 +699,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
                 getAriaValueText={valuetext}
               />
             </div>
-          </Collapse>
-
-          <ListItem
-            button
-            onClick={onPreprocessingListClick}
-            style={{ padding: '12px 0px' }}
-          >
-            <ListItemIcon>
-              {collapsedPreprocessingList ? (
-                <ExpandLessIcon />
-              ) : (
-                <ExpandMoreIcon />
-              )}
-            </ListItemIcon>
-
-            <ListItemText primary="Preprocessing" style={{ fontSize: '1em' }} />
-          </ListItem>
-
-          <Collapse
-            in={collapsedPreprocessingList}
-            timeout="auto"
-            unmountOnExit
-          >
-            <Tooltip title="Initialize dataset" placement="bottom">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={initializeDatasets}
-              >
-                Augment Data
-              </Button>
-            </Tooltip>
-            <FormGroup row>
-              <FormControlLabel
-                control={<Checkbox value="randomDataAugmentation" />}
-                label="Random Data Augmentation"
-              ></FormControlLabel>
-            </FormGroup>
-            <Tooltip title="Initialize dataset" placement="bottom">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={initializeDatasets}
-              >
-                Rescale Pixel Intensity Distribution
-              </Button>
-            </Tooltip>
-            <RescalingForm
-              onLowerPercentileChange={onLowerPercentileChange}
-              onUpperPercentileChange={onUpperPercentileChange}
-              lowerPercentile={lowerPercentile}
-              upperPercentile={upperPercentile}
-              closeDialog={closeDialog}
-              openedDialog={openedDialog}
-            />
           </Collapse>
         </List>
       </DialogContent>
