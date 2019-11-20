@@ -144,12 +144,15 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
   const [stopTraining, setStopTraining] = useState<boolean>(false);
   const [batchSize, setBatchSize] = useState<number>(32);
+
   const [epochs, setEpochs] = useState<number>(10);
+
   const [optimizationAlgorithm, setOptimizationAlgorithm] = useState<string>(
     'adam'
   );
   const [learningRate, setLearningRate] = useState<number>(0.01);
   const [lossFunction, setLossFunction] = useState<string>('meanSquaredError');
+  const [trainStatus, setTrainStatus] = useState<string>('meanSquaredError');
   const [inputShape, setInputShape] = useState<string>('224, 224, 3');
 
   const [trainingLossHistory, setTrainingLossHistory] = useState<LossHistory>(
@@ -257,60 +260,83 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
     const model = await createModel(numberOfClasses);
 
+    const validationSplit = 1 - datasetSplits[1] / 100;
+
     model.compile({
       loss: lossFunctions[lossFunction],
       metrics: ['accuracy'],
       optimizer: optimizationAlgorithms[optimizationAlgorithm](learningRate)
     });
 
-    var counter = 0;
+    // We'll keep a buffer of loss and accuracy values over time.
+    let trainBatchCount = 0;
 
-    const args = {
+    // const trainData = data.getTrainData();
+    // const testData = data.getTestData();
+    const trainData = await createTrainingSet(
+      categories,
+      labledData,
+      numberOfClasses
+    );
+
+    const totalNumBatches =
+      Math.ceil((trainData.data.shape[0] * (1 - validationSplit)) / batchSize) *
+      epochs;
+
+    // During the long-running fit() call for model training, we include
+    // callbacks, so that we can plot the loss and accuracy values in the page
+    // as the training progresses.
+    let valAcc;
+    await model.fit(trainData.data, trainData.labels, {
+      batchSize,
+      validationSplit,
       epochs: epochs,
-      shuffle: true,
-      validationSplit: 1 - datasetSplits[1] / 100,
       callbacks: {
-        onEpochEnd: async (
-          epoch: number,
-          logs?: tensorflow.Logs | undefined
-        ) => {
-          if (logs) {
-            updateLossHistory(counter, logs.loss);
-            updateAccuracHistory(counter, logs.acc);
-            updateValidationAccuracHistory(counter, logs.val_acc);
-            updateValidationLossHistory(counter, logs.val_loss);
-            counter++;
-          }
+        onBatchEnd: async (batch, logs) => {
+          trainBatchCount++;
+          setTrainStatus(
+            `Training... (` +
+              `${((trainBatchCount / totalNumBatches) * 100).toFixed(1)}%` +
+              ` complete). To stop training, refresh or close page.`
+          );
           if (stopTraining) {
             model.stopTraining = true;
           }
+          console.log(trainBatchCount);
+          // ui.plotLoss(trainBatchCount, logs!.loss, 'train');
+          // ui.plotAccuracy(trainBatchCount, logs!.acc, 'train');
+          // if (onIteration && batch % 10 === 0) {
+          //   onIteration('onBatchEnd', batch, logs);
+          // }
+          updateLossHistory(trainBatchCount, logs!.loss);
+          updateAccuracHistory(trainBatchCount, logs!.acc);
+          // updateValidationAccuracHistory(trainBatchCount, logs.val_acc);
+          // updateValidationLossHistory(trainBatchCount, logs.val_loss);
+          await tensorflow.nextFrame();
+        },
+        onEpochEnd: async (epoch, logs) => {
+          valAcc = logs!.val_acc;
+          // ui.plotLoss(trainBatchCount, logs!.val_loss, 'validation');
+          // ui.plotAccuracy(trainBatchCount, logs!.val_acc, 'validation');
+          // if (onIteration) {
+          //   onIteration('onEpochEnd', epoch, logs);
+          // }
+          await tensorflow.nextFrame();
         }
       }
-    };
+    });
 
-    // train network in batches, reduce memory usage
-    var training = true;
-    var i = 0;
-    while (training) {
-      var startBatchIndex = i * batchSize;
-      var endBatchIndex = (i + 1) * batchSize - 1;
-      if (endBatchIndex > labledData.length) {
-        var batchData = labledData.slice(startBatchIndex);
-        training = false;
-      } else {
-        var batchData = labledData.slice(startBatchIndex, endBatchIndex);
-      }
-      const trainingSet = await createTrainingSet(categories, batchData, 2);
-      const trainData = trainingSet.data;
-      const trainLables = trainingSet.lables;
-      await model.fit(trainData, trainLables, args);
-      trainData.dispose();
-      trainLables.dispose();
-      i++;
-    }
+    trainData.data.dispose();
+    trainData.labels.dispose();
+
+    // const testResult = model.evaluate(testData.xs, testData.labels);
+    // const testAccPercent = testResult[1].dataSync()[0] * 100;
+    // const finalValAccPercent = valAcc * 100;
+    // ui.logStatus(
+    //     `Final validation accuracy: ${finalValAccPercent.toFixed(1)}%; ` +
+    //     `Final test accuracy: ${testAccPercent.toFixed(1)}%`);
 
     console.log('finished, saving the model');
-
     await model.save('indexeddb://mobilenet');
   };
 
@@ -336,59 +362,52 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     'categoricalCrossentropy'
   }
   const onParameterTuning = async () => {
-    const numberOfClasses: number = categories.length - 1;
-    const labledData = images.filter((image: Image) => {
-      return (
-        image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000'
-      );
-    });
-    const trainingSet = await createAutotunerDataSet(categories, labledData);
-
-    var tensorflowlModelAutotuner = new autotuner.TensorflowlModelAutotuner(
-      ['accuracy'],
-      trainingSet,
-      numberOfClasses
-    );
-
-    const model = await createModel(numberOfClasses);
-
-    var optimizers = [
-      tensorflow.train.adadelta(learningRate),
-      tensorflow.train.adam(learningRate),
-      tensorflow.train.adamax(learningRate),
-      tensorflow.train.rmsprop(learningRate),
-      tensorflow.train.sgd(learningRate)
-    ];
-
-    var losses = [
-      LossFunction.absoluteDifference,
-      LossFunction.categoricalCrossentropy,
-      LossFunction.cosineDistance,
-      LossFunction.meanSquaredError,
-      LossFunction.sigmoidCrossEntropy,
-      LossFunction.categoricalCrossentropy
-    ];
-
-    const parameters = {
-      lossfunction: losses,
-      optimizerAlgorithm: optimizers,
-      batchSize: [15],
-      epochs: [5, 10, 12, 15, 20]
-    };
-    tensorflowlModelAutotuner.addModel('testModel', model, parameters);
-
-    // tune the hyperparameters
-    const params = await tensorflowlModelAutotuner.bayesianOptimization(
-      'accuracy'
-    );
-
-    setBatchSize(params['batchSize']);
-    setEpochs(params['epochs']);
-    setLossFunction(LossFunction[params['lossFunction']] as string);
-    const optimizer = Object.keys(optimizationAlgorithms)[
-      params['optimizerFunction']
-    ];
-    setOptimizationAlgorithm(optimizer);
+    // const numberOfClasses: number = categories.length - 1;
+    // const labledData = images.filter((image: Image) => {
+    //   return (
+    //     image.categoryIdentifier !== '00000000-0000-0000-0000-000000000000'
+    //   );
+    // });
+    // const trainingSet = await createAutotunerDataSet(categories, labledData);
+    // var tensorflowlModelAutotuner = new autotuner.TensorflowlModelAutotuner(
+    //   ['accuracy'],
+    //   trainingSet,
+    //   numberOfClasses
+    // );
+    // const model = await createModel(numberOfClasses);
+    // var optimizers = [
+    //   tensorflow.train.adadelta(learningRate),
+    //   tensorflow.train.adam(learningRate),
+    //   tensorflow.train.adamax(learningRate),
+    //   tensorflow.train.rmsprop(learningRate),
+    //   tensorflow.train.sgd(learningRate)
+    // ];
+    // var losses = [
+    //   LossFunction.absoluteDifference,
+    //   LossFunction.categoricalCrossentropy,
+    //   LossFunction.cosineDistance,
+    //   LossFunction.meanSquaredError,
+    //   LossFunction.sigmoidCrossEntropy,
+    //   LossFunction.categoricalCrossentropy
+    // ];
+    // const parameters = {
+    //   lossfunction: losses,
+    //   optimizerAlgorithm: optimizers,
+    //   batchSize: [15],
+    //   epochs: [5, 10, 12, 15, 20]
+    // };
+    // tensorflowlModelAutotuner.addModel('testModel', model, parameters);
+    // // tune the hyperparameters
+    // const params = await tensorflowlModelAutotuner.bayesianOptimization(
+    //   'accuracy'
+    // );
+    // setBatchSize(params['batchSize']);
+    // setEpochs(params['epochs']);
+    // setLossFunction(LossFunction[params['lossFunction']] as string);
+    // const optimizer = Object.keys(optimizationAlgorithms)[
+    //   params['optimizerFunction']
+    // ];
+    // setOptimizationAlgorithm(optimizer);
   };
 
   return (
@@ -515,6 +534,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
         <DialogContentText>Training history:</DialogContentText>
 
         <History
+          status={status}
           lossData={trainingLossHistory}
           validationAccuracyData={trainingValidationLossHistory}
           accuracyData={trainingAccuracyHistory}

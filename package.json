@@ -24,6 +24,7 @@
     "classnames": "^2.2.6",
     "color": "^3.1.2",
     "file-saver": "^2.0.2",
+    "fs": "^0.0.1-security",
     "lodash": "^4.17.11",
     "mathjs": "^6.2.3",
     "prettier": "^1.18.2",
