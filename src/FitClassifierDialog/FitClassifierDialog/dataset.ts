@@ -2,6 +2,8 @@ import { Category, Image } from '@piximi/types';
 import * as ImageJS from 'image-js';
 import * as tensorflow from '@tensorflow/tfjs';
 
+const ia = require('image-augment')(tensorflow);
+
 export const createTrainingSet = async (
   categories: Category[],
   labledData: Image[],
@@ -167,11 +169,7 @@ const findCategoryIndex = (
   );
 };
 
-export const imageRotateFlip = (
-  image: HTMLImageElement | HTMLCanvasElement
-): tensorflow.Tensor => {
-  const tf = require('@tensorflow/tfjs');
-  const ia = require('image-augment')(tf);
+export const imageRotateFlip = async (image: Promise<tensorflow.Tensor>) => {
   let degree: number = 0;
   let random = Math.random();
   let tensor_image: tensorflow.Tensor;
@@ -193,24 +191,37 @@ export const imageRotateFlip = (
     ia.affine({ rotate: degree })
   ]);
 
-  tensor_image = tensorflow.browser.fromPixels(image);
-  tensor_image = basicAugmentation.read({ tensor_image });
-
-  return tensor_image;
+  return image
+    .then(tensor => {
+      const a = tensorflow.zeros([1, 224, 224, 1]);
+      tensor.print();
+      return tensorflow.concat([tensor, a], 3); // RBGA
+    })
+    .then(tensor => {
+      return basicAugmentation.read(tensor);
+    })
+    .then(({ images }) => {
+      return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 3]);
+    });
 };
 
 export const tensorImageData = async (image: Image) => {
   const data = await ImageJS.Image.load(image.data);
 
   return tensorflow.tidy(() => {
-    let temp_image: HTMLImageElement | HTMLCanvasElement;
-    let tensor_image: tensorflow.Tensor;
-    temp_image = imageToSquare(data.getCanvas(), 224);
-    tensor_image = imageRotateFlip(temp_image);
-    return tensor_image
+    return tensorflow.browser
+      .fromPixels(imageToSquare(data.getCanvas(), 224))
       .toFloat()
       .sub(tensorflow.scalar(127.5))
       .div(tensorflow.scalar(127.5))
+      .reshape([1, 224, 224, 3]);
+  });
+};
+
+export const testTensorImageData = async (data: ImageJS.Image) => {
+  return tensorflow.tidy(() => {
+    return tensorflow.browser
+      .fromPixels(imageToSquare(data.getCanvas(), 224))
       .reshape([1, 224, 224, 3]);
   });
 };
