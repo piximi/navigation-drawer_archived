@@ -49,12 +49,14 @@ import * as seedrandom from 'seedrandom';
 import { assertTypesMatch } from '@tensorflow/tfjs-core/dist/tensor_util';
 import * as tm from '@teachablemachine/image';
 
-const vis = tfvis.visor();
-vis.close();
-const surface = { name: 'show.fitCallbacks', tab: 'Training' };
+import * as tfvis from '@tensorflow/tfjs-vis';
 
 const SEED_WORD = 'testSuite';
 const seed: seedrandom.prng = seedrandom(SEED_WORD);
+
+const vis = tfvis.visor();
+vis.close();
+const surface = { name: 'show.fitCallbacks', tab: 'Training' };
 
 // @ts-ignore
 var Table = require('cli-table');
@@ -240,6 +242,133 @@ function showMetrics(
     ['Validation', lastEpoch.val_acc.toFixed(3), lastEpoch.val_loss.toFixed(5)]
   );
   console.log('\n' + table.toString());
+}
+
+async function testModel(
+  model: any,
+  alpha: number,
+  classes: string[],
+  trainAndValidationImages: HTMLImageElement[][],
+  testImages: HTMLImageElement[][],
+  testSizePerClass: number,
+  epochs: number,
+  learningRate: number,
+  showEpochResults: boolean = false,
+  earlyStopEpoch: number = epochs
+) {
+  model.setLabels(classes);
+  model.setSeed(SEED_WORD); // set a seed to shuffle predictably
+
+  const logs: tf.Logs[] = [];
+  let time: number = 0;
+
+  await tf.nextFrame().then(async () => {
+    let index = 0;
+    for (const imgSet of trainAndValidationImages) {
+      for (const img of imgSet) {
+        await model.addExample(index, img);
+      }
+      index++;
+    }
+    const start = window.performance.now();
+    await model.train(
+      {
+        denseUnits: 100,
+        epochs,
+        learningRate,
+        batchSize: 16
+      },
+      tfvis.show.fitCallbacks(surface, ['loss', 'acc'])
+    );
+    const end = window.performance.now();
+    time = end - start;
+  });
+
+  showMetrics(alpha, time, logs);
+  return logs[logs.length - 1];
+}
+
+async function testMobilenet(
+  dataset_url: string,
+  version: number,
+  loadFunction: Function,
+  maxImages: number = 200,
+  earlyStop: boolean = false
+) {
+  // classes, samplesPerClass, url
+  const metadata = await (await fetch(dataset_url + 'metadata.json')).json();
+  // 1. Setup dataset parameters
+  const classLabels = metadata.classes as string[];
+
+  let NUM_IMAGE_PER_CLASS = Math.ceil(maxImages / classLabels.length);
+
+  if (NUM_IMAGE_PER_CLASS > Math.min(...metadata.samplesPerClass)) {
+    NUM_IMAGE_PER_CLASS = Math.min(...metadata.samplesPerClass);
+  }
+  const TRAIN_VALIDATION_SIZE_PER_CLASS = NUM_IMAGE_PER_CLASS;
+
+  const table = new Table();
+  table.push({
+    'train/validation size':
+      TRAIN_VALIDATION_SIZE_PER_CLASS * classLabels.length
+  });
+  console.log('\n' + table.toString());
+
+  // 2. Create our datasets once
+  const datasets = await createDatasets(
+    dataset_url,
+    classLabels,
+    TRAIN_VALIDATION_SIZE_PER_CLASS,
+    0,
+    loadFunction
+  );
+  const trainAndValidationImages = datasets.trainAndValidationImages;
+  const testImages = datasets.testImages;
+
+  // NOTE: If testing time, test first model twice because it takes longer
+  // to train the very first time tf.js is training
+  const MOBILENET_VERSION = version;
+  let VALID_ALPHAS = [0.35];
+  // const VALID_ALPHAS = [0.25, 0.5, 0.75, 1];
+  // const VALID_ALPHAS = [0.4];
+  let EPOCHS = 50;
+  let LEARNING_RATE = 0.001;
+  if (version === 1) {
+    LEARNING_RATE = 0.0001;
+    VALID_ALPHAS = [0.25];
+    EPOCHS = 20;
+  }
+
+  const earlyStopEpochs = earlyStop ? 5 : EPOCHS;
+
+  for (let a of VALID_ALPHAS) {
+    const lineStart = '\n//====================================';
+    const lineEnd = '====================================//\n\n';
+    console.log(lineStart);
+    // 3. Test data on the model
+    const teachableMobileNetV2 = await tm.createTeachable(
+      { tfjsVersion: tf.version.tfjs },
+      { version: MOBILENET_VERSION, alpha: a }
+    );
+
+    const lastEpoch = await testModel(
+      teachableMobileNetV2,
+      a,
+      classLabels,
+      trainAndValidationImages,
+      testImages,
+      0,
+      EPOCHS,
+      LEARNING_RATE,
+      false,
+      earlyStopEpochs
+    );
+
+    // assert.isTrue(accuracyV2 > 0.7);
+    console.log(lineEnd);
+
+    return { model: teachableMobileNetV2, lastEpoch };
+  }
 }
 
 const optimizationAlgorithms: { [identifier: string]: any } = {
@@ -919,15 +1048,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             </div>
           </Collapse>
         </List>
-        {/* <DialogContentText>Training history:</DialogContentText> */}
-
-        {/* <History
-          status={status}
-          lossData={trainingLossHistory}
-          validationAccuracyData={trainingValidationLossHistory}
-          accuracyData={trainingAccuracyHistory}
-          validationLossData={trainingValidationAccuracyHistory}
-        /> */}
       </DialogContent>
     </Dialog>
   );
