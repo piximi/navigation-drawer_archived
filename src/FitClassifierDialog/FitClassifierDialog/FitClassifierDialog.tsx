@@ -84,11 +84,30 @@ function loadPngImage(
 }
 
 function loadPiximiImage(image: types.Image): HTMLImageElement {
+  if (image.data.endsWith('.png')) {
+    Promise.resolve(loadPiximiPngImage(image.data));
+  }
+  return getPiximiImage(image);
+}
+
+function getPiximiImage(image: types.Image) {
   const img = new Image(224, 224);
   img.crossOrigin = 'anonymous';
   img.src = image.data;
-  //debugger;
   return img;
+}
+
+function loadPiximiPngImage(dataset_url: string): Promise<HTMLImageElement> {
+  // tslint:disable-next-line:max-line-length
+  const src = dataset_url;
+
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.crossOrigin = 'anonymous';
+    img.src = src;
+  });
 }
 
 /**
@@ -588,7 +607,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     const classes = categories.filter((category: types.Category) => {
       return category.identifier !== '00000000-0000-0000-0000-000000000000';
     });
-    const datasets = await createDatasetsFromPiximiImages(images, categories);
+    const datasets = await createDatasetsFromPiximiImages(images, classes);
     const trainAndValidationImages = datasets.trainAndValidationImages;
     const testImages = datasets.testImages;
 
@@ -734,7 +753,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   const onFit = async () => {
     vis.open();
     // testMobilenet(BEAN_DATASET_URL, 2, loadPngImage);
-    testMobilenet(FLOWER_DATASET_URL, 1, loadJpgImage);
+    testMobilenet(FLOWER_DATASET_URL, 1, loadPngImage);
   };
 
   enum LossFunction {
