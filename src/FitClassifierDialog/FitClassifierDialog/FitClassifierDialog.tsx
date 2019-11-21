@@ -83,6 +83,16 @@ function loadPngImage(
   });
 }
 
+function loadPiximiImage(image: types.Image): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.crossOrigin = 'anonymous';
+    img.src = image.data;
+  });
+}
+
 /**
  * Load a flower image from our storage bucket
  */
@@ -100,6 +110,50 @@ function loadJpgImage(
     img.crossOrigin = 'anonymous';
     img.src = src;
   });
+}
+
+/**
+ * Create train/validation dataset and test dataset with unique images
+ */
+async function createDatasetsFromPiximiImages(
+  images: types.Image[],
+  classes: types.Category[]
+) {
+  // fill in an array with unique numbers
+  let listNumbers = [];
+  let numberOfImages = images.length;
+  for (let i = 0; i < numberOfImages; ++i) listNumbers[i] = i;
+  listNumbers = fisherYates(listNumbers, seed); // shuffle
+
+  const trainAndValidationIndeces = listNumbers.slice(0, numberOfImages * 0.8);
+  const testIndices = listNumbers.slice(
+    numberOfImages * 0.8 + 1,
+    numberOfImages - 1
+  );
+
+  const trainAndValidationImages: HTMLImageElement[][] = [];
+  const testImages: HTMLImageElement[][] = [];
+
+  for (const c of classes) {
+    let load: Array<HTMLImageElement> = [];
+    for (const i of trainAndValidationIndeces) {
+      let imageIndex = trainAndValidationIndeces[i];
+      load.push(await loadPiximiImage(images[imageIndex]));
+    }
+    trainAndValidationImages.push(load);
+
+    load = [];
+    for (const i of testIndices) {
+      let imageIndex = testIndices[i];
+      load.push(await loadPiximiImage(images[imageIndex]));
+    }
+    testImages.push(load);
+  }
+
+  return {
+    trainAndValidationImages,
+    testImages
+  };
 }
 
 /**
@@ -235,14 +289,18 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   } = props;
 
   const styles = useStyles({});
-  const [src, setSrc] = useState(images[0].data);
+
+  // if (images.length != 0) {
+  //   const [src, setSrc] = useState(images[0].data);
+  // }
+
   const [example, setExample] = useState<ImageJS.Image>(new ImageJS.Image());
 
-  const openImage = async () => {
-    console.log(src);
-    const image = await ImageJS.Image.load(src);
-    setExample(image);
-  };
+  // const openImage = async () => {
+  //   console.log(src);
+  //   const image = await ImageJS.Image.load(src);
+  //   setExample(image);
+  // };
 
   // useEffect(() => {
   //   // console.log('foo');
@@ -463,68 +521,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     paper: styles.paper
   };
 
-  const fit = async (labledData: types.Image[]) => {
-    const numberOfClasses: number = categories.length - 1;
-    if (numberOfClasses === 1) {
-      alert('The classifier must have at least two classes!');
-      return;
-    }
-
-    const model = await createModel(numberOfClasses);
-
-    const validationSplit = 1 - datasetSplits[1] / 100;
-
-    model.compile({
-      loss: lossFunctions[lossFunction],
-      metrics: ['accuracy'],
-      optimizer: optimizationAlgorithms[optimizationAlgorithm](learningRate)
-    });
-
-    // We'll keep a buffer of loss and accuracy values over time.
-    let trainBatchCount = 0;
-
-    // const trainData = data.getTrainData();
-    // const testData = data.getTestData();
-    const trainData = await createTrainingSet(
-      categories,
-      labledData,
-      numberOfClasses
-    );
-
-    const totalNumBatches =
-      Math.ceil((trainData.data.shape[0] * (1 - validationSplit)) / batchSize) *
-      epochs;
-
-    // During the long-running fit() call for model training, we include
-    // callbacks, so that we can plot the loss and accuracy values in the page
-    // as the training progresses.
-    const metrics = ['loss', 'val_loss', 'acc', 'val_acc'];
-    const container = {
-      name: 'show.fitCallbacks',
-      tab: 'Training',
-      styles: {
-        height: '1000px'
-      }
-    };
-    const callbacks = tfvis.show.fitCallbacks(container, metrics);
-
-    let valAcc;
-    await model.fit(trainData.data, trainData.labels, {
-      batchSize,
-      validationSplit,
-      epochs: epochs,
-      callbacks: {
-        callbacks
-      }
-    });
-
-    trainData.data.dispose();
-    trainData.labels.dispose();
-
-    console.log('finished, saving the model');
-    await model.save('indexeddb://mobilenet');
-  };
-
   const lossLabelElement = document.getElementById('loss-label');
   const accuracyLabelElement = document.getElementById('accuracy-label');
   const lossValues = [[], []];
@@ -573,13 +569,17 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     console.log('\n' + table.toString());
 
     // 2. Create our datasets once
-    const datasets = await createDatasets(
-      dataset_url,
-      classLabels,
-      TRAIN_VALIDATION_SIZE_PER_CLASS,
-      0,
-      loadFunction
-    );
+    // const datasets = await createDatasets(
+    //   dataset_url,
+    //   classLabels,
+    //   TRAIN_VALIDATION_SIZE_PER_CLASS,
+    //   0,
+    //   loadFunction
+    // );
+    const classes = categories.filter((category: types.Category) => {
+      return category.identifier !== '00000000-0000-0000-0000-000000000000';
+    });
+    const datasets = await createDatasetsFromPiximiImages(images, categories);
     const trainAndValidationImages = datasets.trainAndValidationImages;
     const testImages = datasets.testImages;
 
