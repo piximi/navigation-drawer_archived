@@ -156,6 +156,86 @@ const imageToSquare = (
   return canvas;
 };
 
+const imageResize = async (
+  image: HTMLImageElement | HTMLCanvasElement,
+  size: number
+): Promise<tensorflow.Tensor> => {
+  const dimensions =
+    image instanceof HTMLImageElement
+      ? { width: image.naturalWidth, height: image.naturalHeight }
+      : image;
+
+  const scale = size / Math.max(dimensions.height, dimensions.width);
+  const width = Math.round(scale * dimensions.width);
+  const height = Math.round(scale * dimensions.height);
+
+  const canvas = document.createElement('canvas') as HTMLCanvasElement;
+
+  canvas.width = width;
+  canvas.height = height;
+
+  const context = canvas.getContext('2d') as CanvasRenderingContext2D;
+
+  context.drawImage(image, 0, 0, width, height);
+
+  // const toCanvas = (image: ImageJS.Image): HTMLCanvasElement => {
+  //   return image.getCanvas();
+  // }
+
+  // const base64 = toCanvas(image);
+  // tensorflow.browser.fromPixels(base64);
+
+  // let imgPromise = new Promise<tensorflow.Tensor>((resolve) => {
+  //   const images = tensorflow.zeros([0, 0, 0, 0]);
+  //   resolve(images);
+  // });
+
+  if (width >= height) {
+    const padSize = Math.round(width / 2 - height / 2);
+    const basicAugmentation = ia.sequential([
+      ia.pad({
+        size: [padSize, 0],
+        borderType: 'replicate'
+      })
+    ]);
+    // const a = tensorflow.zeros([1, width, height, 1]);
+    // return basicAugmentation.read(tensorflow.concat([tensorImg, a], 3));
+    return getImgTensor(canvas)
+      .then(tensor => {
+        const a = tensorflow.zeros([1, canvas.width, canvas.height, 1]);
+        return tensorflow.concat([tensor, a], 3); // RBGA
+      })
+      .then(tensor => {
+        return basicAugmentation.read(tensor);
+      })
+      .then(({ images }) => {
+        return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 3]);
+      });
+  } else {
+    const padSize = Math.round(height / 2 - width / 2);
+    // console.log(padSize);
+    const basicAugmentation = ia.sequential([
+      ia.pad({
+        size: [0, padSize],
+        borderType: 'replicate'
+      })
+    ]);
+    return getImgTensor(canvas)
+      .then(tensor => {
+        const a = tensorflow.zeros([1, canvas.width, canvas.height, 1]);
+        // console.log(tensor.shape);
+        return tensorflow.concat([tensor, a], 3); // RBGA
+      })
+      .then(tensor => {
+        return basicAugmentation.read(tensor);
+      })
+      .then(({ images }) => {
+        // console.log((<tensorflow.Tensor>images).shape);
+        return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 3]);
+      });
+  }
+};
+
 const findCategoryIndex = (
   categories: Category[],
   identifier: string
@@ -188,7 +268,8 @@ export const imageRotateFlip = async (image: Promise<tensorflow.Tensor>) => {
   const basicAugmentation = ia.sequential([
     ia.fliplr(0.5),
     ia.flipud(0.5),
-    ia.affine({ rotate: degree })
+    ia.affine({ rotate: degree }),
+    ia.resize([224, 224])
   ]);
 
   return image
@@ -218,10 +299,25 @@ export const tensorImageData = async (image: Image) => {
   });
 };
 
-export const testTensorImageData = async (data: ImageJS.Image) => {
+export const tensorImageJSData = async (
+  data: ImageJS.Image,
+  isFlipped: boolean
+) => {
+  let imgTensor: tensorflow.Tensor;
+  if (isFlipped) {
+    imgTensor = await imageRotateFlip(imageResize(data.getCanvas(), 224));
+  } else {
+    imgTensor = await imageResize(data.getCanvas(), 224);
+  }
+  return tensorflow.tidy(() => {
+    return imgTensor.reshape([1, 224, 224, 3]);
+  });
+};
+
+const getImgTensor = async (data: HTMLImageElement | HTMLCanvasElement) => {
   return tensorflow.tidy(() => {
     return tensorflow.browser
-      .fromPixels(imageToSquare(data.getCanvas(), 224))
-      .reshape([1, 224, 224, 3]);
+      .fromPixels(data)
+      .reshape([1, data.width, data.height, 3]);
   });
 };

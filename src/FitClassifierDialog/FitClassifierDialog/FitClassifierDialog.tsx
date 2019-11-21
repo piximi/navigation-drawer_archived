@@ -37,7 +37,7 @@ import {
   setTestsetRatio,
   createAutotunerDataSet,
   imageRotateFlip,
-  testTensorImageData
+  tensorImageJSData
 } from './dataset';
 import { rescaleData, resizeData, augmentData } from './preprocessing';
 import { createModel, createMobileNet } from './networks';
@@ -122,8 +122,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   );
 
   const openImage = async () => {
-    const src = 'https://picsum.photos/id/59/224/224';
-    console.log(src);
+    const src = 'https://picsum.photos/id/237/200/300';
 
     const image = await ImageJS.Image.load(src);
 
@@ -131,18 +130,16 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   };
 
   const transformImg = async (image: ImageJS.Image) => {
-    const tensor_image = await imageRotateFlip(testTensorImageData(image));
+    const tensor_image = await tensorImageJSData(image, false);
 
     setTensorImg(tensor_image);
   };
 
   useEffect(() => {
-    console.log('foo');
-
     openImage();
     transformImg(example);
     //@ts-ignore
-    console.log(example.getHistograms());
+    // console.log(example.getHistograms());
     console.log(example.height);
 
     if (example.height != 1) {
