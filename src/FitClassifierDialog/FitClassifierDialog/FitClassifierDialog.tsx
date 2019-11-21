@@ -83,14 +83,12 @@ function loadPngImage(
   });
 }
 
-function loadPiximiImage(image: types.Image): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.crossOrigin = 'anonymous';
-    img.src = image.data;
-  });
+function loadPiximiImage(image: types.Image): HTMLImageElement {
+  const img = new Image(224, 224);
+  img.crossOrigin = 'anonymous';
+  img.src = image.data;
+  //debugger;
+  return img;
 }
 
 /**
@@ -134,18 +132,22 @@ async function createDatasetsFromPiximiImages(
   const trainAndValidationImages: HTMLImageElement[][] = [];
   const testImages: HTMLImageElement[][] = [];
 
-  for (const c of classes) {
+  for (let j = 0; j < classes.length; ++j) {
     let load: Array<HTMLImageElement> = [];
-    for (const i of trainAndValidationIndeces) {
+    for (let i = 0; i < trainAndValidationIndeces.length; ++i) {
       let imageIndex = trainAndValidationIndeces[i];
-      load.push(await loadPiximiImage(images[imageIndex]));
+      if (images[imageIndex].categoryIdentifier === classes[j].identifier) {
+        load.push(await loadPiximiImage(images[imageIndex]));
+      }
     }
     trainAndValidationImages.push(load);
 
     load = [];
-    for (const i of testIndices) {
+    for (let i = 0; i < testIndices.length; ++i) {
       let imageIndex = testIndices[i];
-      load.push(await loadPiximiImage(images[imageIndex]));
+      if (images[imageIndex].categoryIdentifier === classes[j].identifier) {
+        load.push(await loadPiximiImage(images[imageIndex]));
+      }
     }
     testImages.push(load);
   }
@@ -552,7 +554,14 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     // classes, samplesPerClass, url
     const metadata = await (await fetch(dataset_url + 'metadata.json')).json();
     // 1. Setup dataset parameters
-    const classLabels = metadata.classes as string[];
+    //const classLabels = metadata.classes as string[];
+    const classLabels: string[] = [];
+    for (let i = 0; i < categories.length; i++) {
+      if (categories[i].identifier !== '00000000-0000-0000-0000-000000000000') {
+        classLabels.push(categories[i].identifier);
+      }
+    }
+    console.log(classLabels);
 
     let NUM_IMAGE_PER_CLASS = Math.ceil(maxImages / classLabels.length);
 
