@@ -47,6 +47,7 @@ import * as tf from '@tensorflow/tfjs';
 import * as seedrandm from 'seedrandom';
 import { assertTypesMatch } from '@tensorflow/tfjs-core/dist/tensor_util';
 import * as tm from '@teachablemachine/image';
+import * as tfvis from '@tensorflow/tfjs-vis';
 
 import * as tfvis from '@tensorflow/tfjs-vis';
 

@@ -94,7 +94,7 @@ export const EvaluateClassifierDialog = (
       modelEvaluationResults = await evaluateTensorflowModelCV(
         model,
         evaluationSet.data,
-        evaluationSet.labels,
+        evaluationSet.lables,
         numberOfClasses
       );
     } else {
@@ -102,7 +102,7 @@ export const EvaluateClassifierDialog = (
       modelEvaluationResults = evaluateTensorflowModel(
         model,
         evaluationSet.data,
-        evaluationSet.labels,
+        evaluationSet.lables,
         numberOfClasses
       );
     }
