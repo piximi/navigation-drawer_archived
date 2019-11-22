@@ -361,21 +361,6 @@ export const tensorImageHTMLData = async (
   return canvas;
 };
 
-export const tensorImageJSData = async (
-  data: ImageJS.Image,
-  isFlipped: boolean
-) => {
-  let imgTensor: tensorflow.Tensor;
-  if (isFlipped) {
-    imgTensor = await imageRotateFlip(imageResize(data.getCanvas(), 224));
-  } else {
-    imgTensor = await imageResize(data.getCanvas(), 224);
-  }
-  return tensorflow.tidy(() => {
-    return imgTensor.reshape([1, 224, 224, 3]);
-  });
-};
-
 const getImgTensor = async (data: HTMLImageElement | HTMLCanvasElement) => {
   return tensorflow.tidy(() => {
     return tensorflow.browser

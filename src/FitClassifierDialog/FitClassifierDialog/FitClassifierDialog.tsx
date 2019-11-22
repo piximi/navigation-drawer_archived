@@ -37,7 +37,8 @@ import {
   createTrainingSet,
   assignToSet,
   setTestsetRatio,
-  createAutotunerDataSet
+  createAutotunerDataSet,
+  tensorImageHTMLData
 } from './dataset';
 import { rescaleData, resizeData, augmentData } from './preprocessing';
 import { createModel, createMobileNet } from './networks';
@@ -47,8 +48,6 @@ import * as tf from '@tensorflow/tfjs';
 import * as seedrandm from 'seedrandom';
 import { assertTypesMatch } from '@tensorflow/tfjs-core/dist/tensor_util';
 import * as tm from '@teachablemachine/image';
-import * as tfvis from '@tensorflow/tfjs-vis';
-
 import * as tfvis from '@tensorflow/tfjs-vis';
 
 const SEED_WORD = 'testSuite';
@@ -285,9 +284,11 @@ async function testModel(
 
   await tf.nextFrame().then(async () => {
     let index = 0;
+    let imgFlip;
     for (const imgSet of trainAndValidationImages) {
       for (const img of imgSet) {
-        await model.addExample(index, img);
+        imgFlip = await tensorImageHTMLData(img, true);
+        await model.addExample(index, imgFlip);
       }
       index++;
     }
@@ -808,9 +809,11 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
     await tf.nextFrame().then(async () => {
       let index = 0;
+      let imgFlip;
       for (const imgSet of trainAndValidationImages) {
         for (const img of imgSet) {
-          await model.addExample(index, img);
+          imgFlip = await tensorImageHTMLData(img, true);
+          await model.addExample(index, imgFlip);
         }
         index++;
       }
@@ -942,15 +945,6 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
             timeout="auto"
             unmountOnExit
           >
-            <Tooltip title="Apply Preprocessing Settings" placement="bottom">
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={onPreprocessingClick}
-              >
-                Apply Preprocessing
-              </Button>
-            </Tooltip>
             <Typography id="rescaling" gutterBottom>
               Pixel Intensity Rescaling
             </Typography>
