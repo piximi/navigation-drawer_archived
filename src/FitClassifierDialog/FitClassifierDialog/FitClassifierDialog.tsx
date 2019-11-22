@@ -41,22 +41,25 @@ import {
 } from './dataset';
 import { rescaleData, resizeData, augmentData } from './preprocessing';
 import { createModel, createMobileNet } from './networks';
-import * as tfvis from '@tensorflow/tfjs-vis';
 
 // additional stuff to test
 import * as tf from '@tensorflow/tfjs';
-import * as seedrandom from 'seedrandom';
+import * as seedrandm from 'seedrandom';
 import { assertTypesMatch } from '@tensorflow/tfjs-core/dist/tensor_util';
 import * as tm from '@teachablemachine/image';
 
 import * as tfvis from '@tensorflow/tfjs-vis';
 
 const SEED_WORD = 'testSuite';
-const seed: seedrandom.prng = seedrandom(SEED_WORD);
 
 const vis = tfvis.visor();
 vis.close();
-const surface = { name: 'show.fitCallbacks', tab: 'Training' };
+const surface = {
+  name: 'show.fitCallbacks',
+  tab: 'Training',
+  style: { zIndex: 1500 },
+  height: 1500
+};
 
 // @ts-ignore
 var Table = require('cli-table');
@@ -142,7 +145,7 @@ async function createDatasetsFromPiximiImages(
   let listNumbers = [];
   let numberOfImages = images.length;
   for (let i = 0; i < numberOfImages; ++i) listNumbers[i] = i;
-  listNumbers = fisherYates(listNumbers, seed); // shuffle
+  listNumbers = fisherYates(listNumbers); // shuffle
 
   const trainAndValidationIndeces = listNumbers.slice(0, numberOfImages * 0.8);
   const testIndices = listNumbers.slice(
@@ -192,7 +195,7 @@ async function createDatasets(
   // fill in an array with unique numbers
   let listNumbers = [];
   for (let i = 0; i < trainSize + testSize; ++i) listNumbers[i] = i;
-  listNumbers = fisherYates(listNumbers, seed); // shuffle
+  listNumbers = fisherYates(listNumbers); // shuffle
 
   const trainAndValidationIndeces = listNumbers.slice(0, trainSize);
   const testIndices = listNumbers.slice(trainSize, trainSize + testSize);
@@ -224,16 +227,12 @@ async function createDatasets(
  * Shuffle an array of Float32Array or Samples using Fisher-Yates algorithm
  * Takes an optional seed value to make shuffling predictable
  */
-function fisherYates(array: number[], seed?: seedrandom.prng) {
+function fisherYates(array: number[]) {
   const length = array.length;
   const shuffled = array.slice(0);
   for (let i = length - 1; i > 0; i -= 1) {
     let randomIndex;
-    if (seed) {
-      randomIndex = Math.floor(seed() * (i + 1));
-    } else {
-      randomIndex = Math.floor(Math.random() * (i + 1));
-    }
+    randomIndex = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[i]];
   }
   return shuffled;
@@ -680,6 +679,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     lossValues[series].push({ x: batch, y: loss });
     const lossContainer = document.getElementById('loss-canvas');
     tfvis.render.linechart(
+      // @ts-ignore
       lossContainer,
       { values: lossValues, series: ['train', 'validation'] },
       {
@@ -866,7 +866,9 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               // Custom names for the series
               series: ['Loss', 'Validation Loss'] // render the chart
             };
+            // @ts-ignore
             tfvis.render.linechart(accSurface, accData, options);
+            // @ts-ignore
             tfvis.render.linechart(lossSurface, lossData, options);
           }
         }
@@ -907,7 +909,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       onClose={closeDialog}
       open={openedDialog}
       TransitionComponent={DialogTransition}
-      style={{ zIndex: 900 }}
+      style={{ zIndex: 999 }}
     >
       <DialogAppBar
         onStopTrainingChange={onStopTrainingChange}
