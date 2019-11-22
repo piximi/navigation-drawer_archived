@@ -135,19 +135,19 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setTensorImg(tensor_image);
   };
 
-  useEffect(() => {
-    openImage();
-    transformImg(example);
-    //@ts-ignore
-    // console.log(example.getHistograms());
-    console.log(example.height);
+  // useEffect(() => {
+  //   openImage();
+  //   transformImg(example);
+  //   //@ts-ignore
+  //   // console.log(example.getHistograms());
+  //   console.log(example.height);
 
-    if (example.height != 1) {
-      tensorImg.print();
-      console.log(tensorImg.shape[1]);
-      // debugger;
-    }
-  });
+  //   if (example.height != 1) {
+  //     tensorImg.print();
+  //     console.log(tensorImg.shape[1]);
+  //     // debugger;
+  //   }
+  // });
 
   // const example = ImageJS.Image.load(images[0]);
 
@@ -206,6 +206,12 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
   const onPreprocessingListClick = () => {
     // shows or hides preprocessing list in interface
     setCollapsedPreprocessingList(!collapsedPreprocessingList);
+  };
+
+  const [randomDataAug, setRandomDataAug] = React.useState<boolean>(true);
+
+  const onRandomDataAugmentationClick = () => {
+    setRandomDataAug(!randomDataAug);
   };
 
   const onPreprocessingClick = async (
@@ -478,7 +484,12 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       } else {
         var batchData = labledData.slice(startBatchIndex, endBatchIndex);
       }
-      const trainingSet = await createTrainingSet(categories, batchData, 2);
+      const trainingSet = await createTrainingSet(
+        categories,
+        batchData,
+        2,
+        randomDataAug
+      );
       const trainData = trainingSet.data;
       const trainLables = trainingSet.lables;
       await model.fit(trainData, trainLables, args);
@@ -640,6 +651,8 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               <FormControlLabel
                 control={<Checkbox value="randomDataAugmentation" />}
                 label="Random Data Augmentation"
+                onClick={onRandomDataAugmentationClick}
+                defaultChecked
               ></FormControlLabel>
             </FormGroup>
             <Typography id="resizing" gutterBottom>

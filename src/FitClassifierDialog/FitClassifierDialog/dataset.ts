@@ -7,7 +7,8 @@ const ia = require('image-augment')(tensorflow);
 export const createTrainingSet = async (
   categories: Category[],
   labledData: Image[],
-  numberOfClasses: number
+  numberOfClasses: number,
+  useRandomAug: boolean
 ) => {
   const trainingData: Image[] = [];
   for (let i = 0; i < labledData.length; i++) {
@@ -18,7 +19,8 @@ export const createTrainingSet = async (
 
   const trainDataSet = await createLabledTensorflowDataSet(
     trainingData,
-    categories
+    categories,
+    useRandomAug
   );
 
   let concatenatedTensorData = tensorflow.tidy(() =>
@@ -118,7 +120,8 @@ export const setTestsetRatio = (testsetRatio: number) => {
 
 const createLabledTensorflowDataSet = async (
   labledData: Image[],
-  categories: Category[]
+  categories: Category[],
+  useRandomAug: boolean
 ) => {
   let tensorData: tensorflow.Tensor<tensorflow.Rank>[] = [];
   let tensorLables: number[] = [];
