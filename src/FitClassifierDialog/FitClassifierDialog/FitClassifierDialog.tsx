@@ -284,9 +284,11 @@ async function testModel(
 
   await tf.nextFrame().then(async () => {
     let index = 0;
+    let imgFlip;
     for (const imgSet of trainAndValidationImages) {
       for (const img of imgSet) {
-        await model.addExample(index, img);
+        imgFlip = await tensorImageHTMLData(img, true);
+        await model.addExample(index, imgFlip);
       }
       index++;
     }
@@ -495,22 +497,22 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
   // Preprocessing clicks
 
-  const [paddingOption1, setPaddingOption1] = React.useState<boolean>(false);
-  const onPaddingOption1Click = () => {
-    setPaddingOption1(!paddingOption1);
-  };
+  // const [paddingOption1, setPaddingOption1] = React.useState<boolean>(false);
+  // const onPaddingOption1Click = () => {
+  //   setPaddingOption1(!paddingOption1);
+  // };
 
-  const [paddingOption2, setPaddingOption2] = React.useState<boolean>(false);
-  const onpaddingOption2Click = () => {
-    setPaddingOption2(!paddingOption2);
-  };
+  // const [paddingOption2, setPaddingOption2] = React.useState<boolean>(false);
+  // const onpaddingOption2Click = () => {
+  //   setPaddingOption2(!paddingOption2);
+  // };
 
-  const [dataAugmentation, setDataAugmentation] = React.useState<boolean>(
-    false
-  );
-  const onDataAugmentationClick = () => {
-    setDataAugmentation(!dataAugmentation);
-  };
+  // const [dataAugmentation, setDataAugmentation] = React.useState<boolean>(
+  //   false
+  // );ç
+  // const onDataAugmentationClick = () => {
+  //   setDataAugmentation(!dataAugmentation);
+  // };
 
   const [lowerPercentile, setLowerPercentile] = React.useState<number>(0);
   const onLowerPercentileChange = (event: React.FormEvent<EventTarget>) => {
@@ -534,31 +536,31 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
     setCollapsedPreprocessingList(!collapsedPreprocessingList);
   };
 
-  const [randomDataAug, setRandomDataAug] = React.useState<boolean>(true);
+  // const [randomDataAug, setRandomDataAug] = React.useState<boolean>(true);
 
-  const onRandomDataAugmentationClick = () => {
-    setRandomDataAug(!randomDataAug);
-  };
+  // const onRandomDataAugmentationClick = () => {
+  //   setRandomDataAug(!randomDataAug);
+  // };
 
-  const onPreprocessingClick = async (
-    lowerPercentile: number,
-    upperPercentile: number,
-    labledData: types.Image[]
-  ) => {
-    //does actual preprocessing upon clicking button
-    // Skeleton
-    const rescaledSet = await rescaleData(
-      lowerPercentile,
-      upperPercentile,
-      labledData
-    );
-    const resizedSet = await resizeData(
-      paddingOption1,
-      paddingOption2,
-      labledData
-    );
-    const augmentedSet = await augmentData(dataAugmentation, labledData);
-  };
+  // const onPreprocessingClick = async (
+  //   lowerPercentile: number,
+  //   upperPercentile: number,
+  //   labledData: types.Image[]
+  // ) => {
+  //   //does actual preprocessing upon clicking button
+  //   // Skeleton
+  //   const rescaledSet = await rescaleData(
+  //     lowerPercentile,
+  //     upperPercentile,
+  //     labledData
+  //   );
+  //   const resizedSet = await resizeData(
+  //     paddingOption1,
+  //     paddingOption2,
+  //     labledData
+  //   );
+  //   const augmentedSet = await augmentData(dataAugmentation, labledData);
+  // };
 
   const [datasetSplits, setDatasetSplits] = React.useState([60, 80]);
 
@@ -832,9 +834,11 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
 
     await tf.nextFrame().then(async () => {
       let index = 0;
+      let imgFlip;
       for (const imgSet of trainAndValidationImages) {
         for (const img of imgSet) {
-          await model.addExample(index, img);
+          imgFlip = await tensorImageHTMLData(img, true);
+          await model.addExample(index, imgFlip);
         }
         index++;
       }
@@ -932,7 +936,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
       onClose={closeDialog}
       open={openedDialog}
       TransitionComponent={DialogTransition}
-      style={{ zIndex: 1203 }}
+      style={{ zIndex: 900 }}
     >
       <DialogAppBar
         onStopTrainingChange={onStopTrainingChange}
@@ -968,7 +972,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               <Button
                 variant="contained"
                 color="primary"
-                onClick={onPreprocessingClick}
+                // onClick={onPreprocessingClick}
               >
                 Apply Preprocessing
               </Button>
@@ -991,7 +995,7 @@ export const FitClassifierDialog = (props: FitClassifierDialogProps) => {
               <FormControlLabel
                 control={<Checkbox value="randomDataAugmentation" />}
                 label="Random Data Augmentation"
-                onClick={onRandomDataAugmentationClick}
+                // onClick={onRandomDataAugmentationClick}
                 defaultChecked
               ></FormControlLabel>
             </FormGroup>

@@ -165,9 +165,11 @@ const imageToSquare = (
 };
 
 const imageResize = async (
-  image: HTMLImageElement | HTMLCanvasElement,
+  image: HTMLImageElement,
   size: number
-): Promise<tensorflow.Tensor> => {
+): Promise<tensorflow.Tensor<tensorflow.Rank.R3>> => {
+  const data = await ImageJS.Image.load(image.src);
+  image = data.getCanvas();
   const dimensions =
     image instanceof HTMLImageElement
       ? { width: image.naturalWidth, height: image.naturalHeight }
@@ -186,17 +188,18 @@ const imageResize = async (
 
   context.drawImage(image, 0, 0, width, height);
 
-  // const toCanvas = (image: ImageJS.Image): HTMLCanvasElement => {
-  //   return image.getCanvas();
-  // }
+  let degree: number = 0;
+  let random = Math.random();
 
-  // const base64 = toCanvas(image);
-  // tensorflow.browser.fromPixels(base64);
-
-  // let imgPromise = new Promise<tensorflow.Tensor>((resolve) => {
-  //   const images = tensorflow.zeros([0, 0, 0, 0]);
-  //   resolve(images);
-  // });
+  if (random < 0.25) {
+    degree = 0;
+  } else if (random < 0.5) {
+    degree = 90;
+  } else if (random < 0.75) {
+    degree = 180;
+  } else {
+    degree = 270;
+  }
 
   if (width >= height) {
     const padSize = Math.round(width / 2 - height / 2);
@@ -204,42 +207,49 @@ const imageResize = async (
       ia.pad({
         size: [padSize, 0],
         borderType: 'replicate'
-      })
+      }),
+      ia.fliplr(0.5),
+      ia.flipud(0.5),
+      ia.affine({ rotate: degree }),
+      ia.resize([224, 224])
     ]);
-    // const a = tensorflow.zeros([1, width, height, 1]);
-    // return basicAugmentation.read(tensorflow.concat([tensorImg, a], 3));
-    return getImgTensor(canvas)
-      .then(tensor => {
-        const a = tensorflow.zeros([1, canvas.width, canvas.height, 1]);
-        return tensorflow.concat([tensor, a], 3); // RBGA
-      })
+    return await getImgTensor(canvas)
       .then(tensor => {
         return basicAugmentation.read(tensor);
       })
       .then(({ images }) => {
-        return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 3]);
+        return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 4]);
+      })
+      .then(tensor => {
+        return tensor.toInt();
+      })
+      .then(tensor => {
+        return tensor.reshape([224, 224, 4]);
       });
   } else {
     const padSize = Math.round(height / 2 - width / 2);
-    // console.log(padSize);
     const basicAugmentation = ia.sequential([
       ia.pad({
         size: [0, padSize],
         borderType: 'replicate'
-      })
+      }),
+      ia.fliplr(0.5),
+      ia.flipud(0.5),
+      ia.affine({ rotate: degree }),
+      ia.resize([224, 224])
     ]);
-    return getImgTensor(canvas)
-      .then(tensor => {
-        const a = tensorflow.zeros([1, canvas.width, canvas.height, 1]);
-        // console.log(tensor.shape);
-        return tensorflow.concat([tensor, a], 3); // RBGA
-      })
+    return await getImgTensor(canvas)
       .then(tensor => {
         return basicAugmentation.read(tensor);
       })
       .then(({ images }) => {
-        // console.log((<tensorflow.Tensor>images).shape);
-        return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 3]);
+        return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 4]);
+      })
+      .then(tensor => {
+        return tensor.toInt();
+      })
+      .then(tensor => {
+        return tensor.reshape([224, 224, 4]);
       });
   }
 };
@@ -257,10 +267,12 @@ const findCategoryIndex = (
   );
 };
 
-export const imageRotateFlip = async (image: Promise<tensorflow.Tensor>) => {
+export const imageRotateFlip = async (
+  image: Promise<tensorflow.Tensor<tensorflow.Rank.R3>>
+) => {
   let degree: number = 0;
   let random = Math.random();
-  let tensor_image: tensorflow.Tensor;
+  let tensor_image: tensorflow.Tensor<tensorflow.Rank.R3>;
 
   // hard code
 
@@ -280,22 +292,20 @@ export const imageRotateFlip = async (image: Promise<tensorflow.Tensor>) => {
     ia.resize([224, 224])
   ]);
 
-  return image
-    .then(tensor => {
-      const a = tensorflow.zeros([1, 224, 224, 1]);
-      tensor.print();
-      return tensorflow.concat([tensor, a], 3); // RBGA
-    })
+  return await image
     .then(tensor => {
       return basicAugmentation.read(tensor);
     })
-    .then(({ images }) => {
-      return tensorflow.slice(images, [0, 0, 0, 0], [1, 224, 224, 3]);
+    .then(tensor => {
+      return tensorflow.slice(tensor, [0, 0, 0, 0], [1, 224, 224, 4]);
+    })
+    .then(tensor => {
+      return tensor.reshape([224, 224, 4]);
     });
 };
 
-export const tensorImageData = async (image: Image) => {
-  const data = await ImageJS.Image.load(image.data);
+export const tensorImageData = async (image: HTMLImageElement) => {
+  const data = await ImageJS.Image.load(image.src);
 
   return tensorflow.tidy(() => {
     return tensorflow.browser
@@ -321,18 +331,34 @@ export const tensorImageTypeData = async (data: Image, isFlipped: boolean) => {
 };
 
 export const tensorImageHTMLData = async (
-  data: HTMLImageElement | HTMLCanvasElement,
+  data: HTMLImageElement,
   isFlipped: boolean
 ) => {
   let imgTensor_R3: tensorflow.Tensor<tensorflow.Rank.R3>;
-  let imgTensor: tensorflow.Tensor;
-  if (isFlipped) {
-    imgTensor = await imageRotateFlip(imageResize(data, 224));
-  } else {
-    imgTensor = await imageResize(data, 224);
-  }
-  imgTensor_R3 = imgTensor.reshape([224, 224, 3]);
-  return tensorflow.browser.toPixels(imgTensor_R3);
+  let imgTensor: tensorflow.Tensor<tensorflow.Rank.R3>;
+  let arrayImg: Uint8ClampedArray;
+
+  imgTensor = await imageResize(data, 224);
+
+  // imgTensor = await getImgTensor(data);
+  // imgTensor.print();
+
+  imgTensor = <tensorflow.Tensor<tensorflow.Rank.R3>>imgTensor;
+
+  // const a = tensorflow.zeros([224, 224, 1]);
+  // imgTensor_R3 = imgTensor.reshape([224, 224, 4]);
+  // imgTensor = tensorflow.concat([imgTensor, a], 2); // RBGA
+  // // imgTensor.print();
+  // imgTensor_R3 = imgTensor;
+  // imgTensor_R3.print();
+  const canvas = document.createElement('canvas') as HTMLCanvasElement;
+  canvas.width = 224;
+  canvas.height = 224;
+  const context = canvas.getContext('2d') as CanvasRenderingContext2D;
+  arrayImg = await tensorflow.browser.toPixels(imgTensor, canvas);
+  const imageData = new ImageData(arrayImg, 224, 224);
+  context.putImageData(imageData, 0, 0);
+  return canvas;
 };
 
 export const tensorImageJSData = async (
@@ -353,7 +379,7 @@ export const tensorImageJSData = async (
 const getImgTensor = async (data: HTMLImageElement | HTMLCanvasElement) => {
   return tensorflow.tidy(() => {
     return tensorflow.browser
-      .fromPixels(data)
-      .reshape([1, data.width, data.height, 3]);
+      .fromPixels(data, 4)
+      .reshape([1, data.width, data.height, 4]);
   });
 };
