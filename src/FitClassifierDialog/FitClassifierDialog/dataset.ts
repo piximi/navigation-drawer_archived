@@ -50,7 +50,8 @@ export const createAutotunerDataSet = async (
 
   const trainDataSet = await createLabledTensorflowDataSet(
     trainingData,
-    categories
+    categories,
+    false
   );
 
   var datapoints: {
@@ -82,7 +83,11 @@ export const createTestSet = async (
     }
   }
 
-  const testDataSet = await createLabledTensorflowDataSet(testData, categories);
+  const testDataSet = await createLabledTensorflowDataSet(
+    testData,
+    categories,
+    false
+  );
 
   return { data: testDataSet.data, lables: testDataSet.lables };
 };
@@ -97,7 +102,7 @@ export const createPredictionSet = async (images: Image[]) => {
   const imageIdentifiers: string[] = [];
 
   for (const image of predictionImageSet) {
-    predictionTensorSet.push(await tensorImageData(image));
+    predictionTensorSet.push(await tensorImageTypeData(image, false));
     imageIdentifiers.push(image.identifier);
   }
   return { data: predictionTensorSet, identifiers: imageIdentifiers };
@@ -127,7 +132,7 @@ const createLabledTensorflowDataSet = async (
   let tensorLables: number[] = [];
 
   for (const image of labledData) {
-    tensorData.push(await tensorImageData(image));
+    tensorData.push(await tensorImageTypeData(image, useRandomAug));
     tensorLables.push(findCategoryIndex(categories, image.categoryIdentifier));
   }
 
@@ -300,6 +305,34 @@ export const tensorImageData = async (image: Image) => {
       .div(tensorflow.scalar(127.5))
       .reshape([1, 224, 224, 3]);
   });
+};
+
+export const tensorImageTypeData = async (data: Image, isFlipped: boolean) => {
+  let imgTensor: tensorflow.Tensor;
+  const dataJS = await ImageJS.Image.load(data.data);
+  if (isFlipped) {
+    imgTensor = await imageRotateFlip(imageResize(dataJS.getCanvas(), 224));
+  } else {
+    imgTensor = await imageResize(dataJS.getCanvas(), 224);
+  }
+  return tensorflow.tidy(() => {
+    return imgTensor.reshape([1, 224, 224, 3]);
+  });
+};
+
+export const tensorImageHTMLData = async (
+  data: HTMLImageElement | HTMLCanvasElement,
+  isFlipped: boolean
+) => {
+  let imgTensor_R3: tensorflow.Tensor<tensorflow.Rank.R3>;
+  let imgTensor: tensorflow.Tensor;
+  if (isFlipped) {
+    imgTensor = await imageRotateFlip(imageResize(data, 224));
+  } else {
+    imgTensor = await imageResize(data, 224);
+  }
+  imgTensor_R3 = imgTensor.reshape([224, 224, 3]);
+  return tensorflow.browser.toPixels(imgTensor_R3);
 };
 
 export const tensorImageJSData = async (

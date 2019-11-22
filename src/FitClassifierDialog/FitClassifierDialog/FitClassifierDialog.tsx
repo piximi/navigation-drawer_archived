@@ -37,7 +37,8 @@ import {
   setTestsetRatio,
   createAutotunerDataSet,
   imageRotateFlip,
-  tensorImageJSData
+  tensorImageJSData,
+  tensorImageHTMLData
 } from './dataset';
 import { rescaleData, resizeData, augmentData } from './preprocessing';
 import { createModel, createMobileNet } from './networks';
