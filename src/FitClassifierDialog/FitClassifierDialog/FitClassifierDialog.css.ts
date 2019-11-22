@@ -25,6 +25,6 @@ export const styles = (theme: Theme) =>
       marginLeft: drawerWidth
     },
     paper: {
-      zIndex: 900
+      zIndex: 1004
     }
   });
