@@ -1871,6 +1871,14 @@
     "@svgr/plugin-svgo" "^4.3.1"
     loader-utils "^1.2.3"
 
+"@teachablemachine/image@^0.8.4":
+  version "0.8.4"
+  resolved "https://registry.yarnpkg.com/@teachablemachine/image/-/image-0.8.4.tgz#11d4ffe0e21e05b687acac26fe55cff8178a0a64"
+  integrity sha512-99zL9OjGHqfQSKR+VcHFSLE5EI93GKQhLfCrrLg0+VcfTA+1nJ4Zf6dKm51ugm8qUaPCa4Sbf8Qs4rkogOihaw==
+  dependencies:
+    autobind-decorator "^2.4.0"
+    seedrandom "^2.4.3"
+
 "@tensorflow/tfjs-converter@1.2.11":
   version "1.2.11"
   resolved "https://registry.yarnpkg.com/@tensorflow/tfjs-converter/-/tfjs-converter-1.2.11.tgz#c81a8bde669179e20e676dba790eeca61fa6ce0a"
@@ -2850,6 +2858,11 @@ atob@^2.1.1:
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
   integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
 
+autobind-decorator@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/autobind-decorator/-/autobind-decorator-2.4.0.tgz#ea9e1c98708cf3b5b356f7cf9f10f265ff18239c"
+  integrity sha512-OGYhWUO72V6DafbF8PM8rm3EPbfuyMZcJhtm5/n26IDwO18pohE4eNazLoCGhPiXOCD0gEGmrbU3849QvM8bbw==
+
 autoprefixer@^9.4.9:
   version "9.6.4"
   resolved "https://registry.yarnpkg.com/autoprefixer/-/autoprefixer-9.6.4.tgz#e6453be47af316b2923eaeaed87860f52ad4b7eb"
@@ -3799,6 +3812,13 @@ cli-table3@0.5.1:
   optionalDependencies:
     colors "^1.1.2"
 
+cli-table@^0.3.1:
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/cli-table/-/cli-table-0.3.1.tgz#f53b05266a8b1a0b934b3d0821e6e2dc5914ae23"
+  integrity sha1-9TsFJmqLGguTSz0IIebi3FkUriM=
+  dependencies:
+    colors "1.0.3"
+
 cli-truncate@^0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/cli-truncate/-/cli-truncate-0.2.1.tgz#9f15cfbb0705005369216c626ac7d05ab90dd574"
@@ -3931,6 +3951,11 @@ color@^3.1.2:
   dependencies:
     color-convert "^1.9.1"
     color-string "^1.5.2"
+
+colors@1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/colors/-/colors-1.0.3.tgz#0433f44d809680fdeb60ed260f1b0c262e82a40b"
+  integrity sha1-BDP0TYCWgP3rYO0mDxsMJi6CpAs=
 
 colors@^1.1.2:
   version "1.4.0"
@@ -6160,6 +6185,11 @@ has@^1.0.1, has@^1.0.3:
   dependencies:
     function-bind "^1.1.1"
 
+hasard@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/hasard/-/hasard-1.5.0.tgz#16117b0141919d21f0a43d190d4e79f9affaae97"
+  integrity sha512-KEcz/vg+iOdva1mQb3/xqmqehm4e/hGYiENRJIgmiiB+iqHmy+P975TKeLw8lTWYXw094r+QfCF1PbbbtAC9eA==
+
 hash-base@^3.0.0:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/hash-base/-/hash-base-3.0.4.tgz#5fc8686847ecd73499403319a6b0a3f3f6ae4918"
@@ -6394,6 +6424,15 @@ ignore@^3.3.5:
   version "3.3.10"
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-3.3.10.tgz#0a97fb876986e8081c631160f8f9f389157f0043"
   integrity sha512-Pgs951kaMm5GXP7MOvxERINe3gsaVjUWFm+UZPSq9xYriQAksyhg0csnS0KXSNRD5NmNdapXEpjxG49+AKh/ug==
+
+image-augment@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/image-augment/-/image-augment-1.1.1.tgz#27e38caf21a959b382ee8b1920cbf110e56a6c78"
+  integrity sha512-hAEe5xX8u07C5Imal1pNulWbS/fk/mz1G7JvqAJ6syI+j7xyn3KenUnzga5GqH/oY3OszN97t+FktL+i/VBRtA==
+  dependencies:
+    debug "^4.1.1"
+    hasard "^1.5.0"
+    linear-solve "^1.2.1"
 
 image-js@^0.21.6:
   version "0.21.7"
@@ -7779,6 +7818,11 @@ lie@3.1.1:
   integrity sha1-mkNrLMd0bKWd56QfpGmz77dr2H4=
   dependencies:
     immediate "~3.0.5"
+
+linear-solve@^1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/linear-solve/-/linear-solve-1.2.1.tgz#6dcd0a5b0fe8547b7a5971fe2f77221c8c96a20e"
+  integrity sha1-bc0KWw/oVHt6WXH+L3ciHIyWog4=
 
 lines-and-columns@^1.1.6:
   version "1.1.6"
@@ -10914,6 +10958,11 @@ seedrandom@2.4.3:
   version "2.4.3"
   resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.3.tgz#2438504dad33917314bff18ac4d794f16d6aaecc"
   integrity sha1-JDhQTa0zkXMUv/GKxNeU8W1qrsw=
+
+seedrandom@^2.4.3:
+  version "2.4.4"
+  resolved "https://registry.yarnpkg.com/seedrandom/-/seedrandom-2.4.4.tgz#b25ea98632c73e45f58b77cfaa931678df01f9ba"
+  integrity sha512-9A+PDmgm+2du77B5i0Ip2cxOqqHjgNxnBgglxLcX78A2D6c2rTo61z4jnVABpF4cKeDMDG+cmXXvdnqse2VqMA==
 
 select@^1.1.2:
   version "1.1.2"
